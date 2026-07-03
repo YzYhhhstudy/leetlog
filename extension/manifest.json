@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "LeetLog — LeetCode 刷题自动记录到本地知识库",
+  "version": "0.2.0",
+  "description": "打开题目敲下第一个键自动计时，提交自动计数，AC 自动把代码和用时写进本地 Obsidian 笔记。全程本地，不上传任何数据。",
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://leetcode.com/problems/*", "*://leetcode.cn/problems/*"],
+      "js": ["interceptor.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://leetcode.com/problems/*", "*://leetcode.cn/problems/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LeetLog"
+  }
+}
