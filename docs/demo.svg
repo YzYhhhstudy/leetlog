@@ -1,0 +1,94 @@
+<svg viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#161b27"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4f8cff"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="540" rx="16" fill="url(#bg)"/>
+
+  <!-- 标题 -->
+  <text x="600" y="42" text-anchor="middle" fill="#e8edf6" font-size="22" font-weight="700" font-family="-apple-system, 'Segoe UI', sans-serif">📗 LeetLog — solve on LeetCode, notes appear in Obsidian</text>
+  <text x="600" y="66" text-anchor="middle" fill="#8b98af" font-size="13" font-family="-apple-system, 'Segoe UI', sans-serif">做题即记录 · 全程本地 · 你只写感悟</text>
+
+  <!-- ============ 左：LeetCode 面板 ============ -->
+  <g>
+    <rect x="40" y="95" width="420" height="400" rx="12" fill="#1a1a1a" stroke="#333" stroke-width="1.5"/>
+    <rect x="40" y="95" width="420" height="36" rx="12" fill="#262626"/>
+    <rect x="40" y="113" width="420" height="18" fill="#262626"/>
+    <circle cx="62" cy="113" r="5" fill="#ff5f57"/><circle cx="80" cy="113" r="5" fill="#febc2e"/><circle cx="98" cy="113" r="5" fill="#28c840"/>
+    <text x="120" y="118" fill="#ddd" font-size="13">9. Palindrome Number</text>
+    <text x="404" y="118" fill="#28c840" font-size="12">Easy</text>
+
+    <!-- 代码 -->
+    <text x="60" y="160" fill="#c586c0" font-size="13">class <tspan fill="#4ec9b0">Solution</tspan><tspan fill="#d4d4d4">:</tspan></text>
+    <text x="76" y="182" fill="#c586c0" font-size="13">def <tspan fill="#dcdcaa">isPalindrome</tspan><tspan fill="#d4d4d4">(self, x: int) -&gt; bool:</tspan></text>
+    <text x="92" y="204" fill="#d4d4d4" font-size="13">sx = <tspan fill="#dcdcaa">str</tspan>(x)</text>
+    <text x="92" y="226" fill="#d4d4d4" font-size="13">s, e = 0, <tspan fill="#dcdcaa">len</tspan>(sx)-1</text>
+    <text x="92" y="248" fill="#c586c0" font-size="13">while <tspan fill="#d4d4d4">s &lt; e:</tspan></text>
+    <text x="108" y="270" fill="#c586c0" font-size="13">if <tspan fill="#d4d4d4">sx[s] != sx[e]: </tspan><tspan fill="#c586c0">return</tspan> <tspan fill="#569cd6">False</tspan></text>
+    <text x="108" y="292" fill="#d4d4d4" font-size="13">s, e = s+1, e-1</text>
+    <text x="92" y="314" fill="#c586c0" font-size="13">return <tspan fill="#569cd6">True</tspan></text>
+
+    <!-- Accepted 横幅 -->
+    <rect x="60" y="345" width="380" height="54" rx="8" fill="#0f2818" stroke="#28c840" stroke-width="1"/>
+    <text x="78" y="368" fill="#28c840" font-size="16" font-weight="700">✓ Accepted</text>
+    <text x="78" y="388" fill="#7fb890" font-size="12">11511 / 11511 · 5 ms (beats 71.6%) · 19.3 MB</text>
+
+    <!-- Submit 按钮 -->
+    <rect x="330" y="425" width="110" height="36" rx="8" fill="#2cbb5d"/>
+    <text x="385" y="448" text-anchor="middle" fill="#fff" font-size="14" font-weight="600" font-family="-apple-system, sans-serif">Submit</text>
+    <text x="60" y="478" fill="#666" font-size="11">leetcode.com/problems/palindrome-number</text>
+  </g>
+
+  <!-- ============ 中：事件流 ============ -->
+  <g font-family="-apple-system, 'PingFang SC', 'Segoe UI', sans-serif">
+    <line x1="470" y1="180" x2="720" y2="180" stroke="#4f8cff" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="1 0"/>
+    <rect x="500" y="152" width="190" height="26" rx="13" fill="#14233f" stroke="#2c4a7c"/>
+    <text x="595" y="169" text-anchor="middle" fill="#7fb0ff" font-size="12">⌨️ first keystroke → timer</text>
+
+    <line x1="470" y1="280" x2="720" y2="280" stroke="#4f8cff" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="500" y="252" width="190" height="26" rx="13" fill="#14233f" stroke="#2c4a7c"/>
+    <text x="595" y="269" text-anchor="middle" fill="#7fb0ff" font-size="12">📤 submit intercepted</text>
+
+    <line x1="470" y1="380" x2="720" y2="380" stroke="#28c840" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="500" y="352" width="190" height="26" rx="13" fill="#0f2818" stroke="#1f6b38"/>
+    <text x="595" y="369" text-anchor="middle" fill="#5fdd8b" font-size="12">✅ AC → note written</text>
+
+    <text x="595" y="425" text-anchor="middle" fill="#556" font-size="11">127.0.0.1 only · nothing uploaded</text>
+    <text x="595" y="442" text-anchor="middle" fill="#556" font-size="11">数据不出你的电脑</text>
+  </g>
+
+  <!-- ============ 右：Obsidian 笔记 ============ -->
+  <g>
+    <rect x="730" y="95" width="430" height="400" rx="12" fill="#20212c" stroke="#3d3f52" stroke-width="1.5"/>
+    <rect x="730" y="95" width="430" height="36" rx="12" fill="#2a2b38"/>
+    <rect x="730" y="113" width="430" height="18" fill="#2a2b38"/>
+    <text x="750" y="118" fill="#a79ce8" font-size="13">◈ 0009-palindrome-number.md</text>
+    <text x="1105" y="118" fill="#666" font-size="11">Obsidian</text>
+
+    <text x="752" y="162" fill="#e8e6f0" font-size="17" font-weight="700" font-family="-apple-system, 'PingFang SC', sans-serif">9. Palindrome Number</text>
+    <text x="752" y="184" fill="#8886a0" font-size="12" font-family="-apple-system, sans-serif">Easy · Math · attempts: 1 · total_ac: 1</text>
+
+    <text x="752" y="216" fill="#c9c6dd" font-size="13" font-weight="700" font-family="-apple-system, 'PingFang SC', sans-serif">第 1 次 · 2026-07-03 周五</text>
+    <text x="752" y="238" fill="#9d99b8" font-size="11.5">⏱ 开始 11:50 → 首提 11:51 · 编码 1 分钟 → AC 11:51</text>
+    <text x="768" y="256" fill="#9d99b8" font-size="11.5">· 提交 1 次 / 通过 1 次 · 本题停留 2 分钟</text>
+
+    <!-- 代码块 -->
+    <rect x="752" y="270" width="386" height="120" rx="8" fill="#17181f"/>
+    <text x="766" y="292" fill="#5fdd8b" font-size="11.5">✅ 通过代码 · Python3 · 11:51（5 ms · 19.3 MB）</text>
+    <text x="766" y="314" fill="#c586c0" font-size="11.5">class <tspan fill="#4ec9b0">Solution</tspan><tspan fill="#d4d4d4">:</tspan></text>
+    <text x="782" y="332" fill="#c586c0" font-size="11.5">def <tspan fill="#dcdcaa">isPalindrome</tspan><tspan fill="#d4d4d4">(self, x)…</tspan></text>
+    <text x="782" y="350" fill="#d4d4d4" font-size="11.5">sx = str(x)  <tspan fill="#666"># full code saved ✓</tspan></text>
+    <text x="782" y="368" fill="#d4d4d4" font-size="11.5">…</text>
+
+    <g font-family="-apple-system, 'PingFang SC', sans-serif">
+      <text x="752" y="420" fill="#c9c6dd" font-size="13" font-weight="700">💭 思路 &amp; 感悟</text>
+      <text x="752" y="442" fill="#6f6c88" font-size="12" font-style="italic">← the only part you write yourself</text>
+      <text x="752" y="468" fill="#c9c6dd" font-size="13" font-weight="700">📚 学到了什么　🔀 多种解法</text>
+    </g>
+  </g>
+</svg>
