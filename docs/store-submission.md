@@ -116,24 +116,16 @@ type in the editor, submit — a Markdown note is created locally.
 - [x] manifest description 为英文
 - [x] `isDesktopOnly: true`（用了 Node http，移动端不支持）
 
-### 提交 PR
-1. Fork [obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases)
-2. 编辑 `community-plugins.json`，在**末尾**追加：
+### 提交（2026 新流程：官方门户，不再接受 PR）
 
-```json
-{
-  "id": "leetlog-bridge",
-  "name": "LeetLog Bridge",
-  "author": "YzYhhhstudy",
-  "description": "Receives events from the LeetLog browser extension and auto-writes LeetCode practice notes (timing, submissions, accepted code) into your vault.",
-  "repo": "YzYhhhstudy/leetlog"
-}
-```
+> obsidianmd/obsidian-releases 已关闭 PR 提交，现在走 community.obsidian.md 门户 + 自动化审查。
 
-3. 提 PR，标题 `Add plugin: LeetLog Bridge`，按 PR 模板勾选 checklist
-4. 机器人会立刻自动校验（release 资产、manifest 位置等），有红叉按提示修
-5. 人工审核 1~4 周；期间审核员可能提代码建议（常见：要求用 Obsidian API 替代原生 API），
-   跟着改就行
+1. 打开 [community.obsidian.md](https://community.obsidian.md)，用 Obsidian 账户登录（没有就注册一个），并按提示**关联 GitHub 账户**（YzYhhhstudy）
+2. 侧边栏 **Plugins → New plugin**
+3. 填仓库地址：`https://github.com/YzYhhhstudy/leetlog`
+4. 勾选同意开发者政策 → Submit
+5. 系统**自动审查**（检查根目录 manifest、release 资产、LICENSE、README 等——本仓库已全部就绪），反馈直接显示在门户里；有问题就改仓库、发新 release、重新触发
+6. 自动审查通过后进入人工审核队列
 
 ### 用户侧安装路径（上架后）
 Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install & Enable。
