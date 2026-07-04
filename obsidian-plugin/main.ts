@@ -4,7 +4,29 @@
  * 通过 Obsidian Vault API 写刷题笔记。与 Python 版 leetlog_server.py 接口完全一致。
  */
 import { App, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
-import * as http from "http";
+
+// Obsidian 桌面端（Electron 渲染进程）通过 require 提供 Node 的 http 模块。
+// 这里用最小化的自持类型声明，避免依赖 @types/node（社区审查的 lint 环境没有它）。
+interface HttpIncomingMessage {
+  method?: string;
+  url?: string;
+  on(event: "data", cb: (chunk: unknown) => void): void;
+  on(event: "end", cb: () => void): void;
+}
+interface HttpServerResponse {
+  setHeader(name: string, value: string): void;
+  writeHead(code: number, headers?: Record<string, string>): void;
+  end(body?: string): void;
+}
+interface HttpServer {
+  close(): void;
+  on(event: "error", cb: (e: { code?: string; message: string }) => void): void;
+  listen(port: number, host: string, cb?: () => void): void;
+}
+interface HttpModule {
+  createServer(handler: (req: HttpIncomingMessage, res: HttpServerResponse) => void): HttpServer;
+}
+const http = (window as unknown as { require: (m: string) => unknown }).require("http") as HttpModule;
 
 // ---------------- 类型 ----------------
 
@@ -126,12 +148,13 @@ function fmSet(text: string, key: string, value: string | number): string {
 
 export default class LeetLogBridge extends Plugin {
   data: PersistedData = DEFAULTS;
-  server: http.Server | null = null;
+  server: HttpServer | null = null;
   private busy: Promise<void> = Promise.resolve(); // 事件串行化（等价 Python 版的锁）
 
   async onload() {
-    this.data = Object.assign({}, DEFAULTS, await this.loadData());
-    this.data.settings = Object.assign({}, DEFAULTS.settings, this.data.settings);
+    const saved = (await this.loadData()) as Partial<PersistedData> | null;
+    this.data = Object.assign({}, DEFAULTS, saved ?? {});
+    this.data.settings = Object.assign({}, DEFAULTS.settings, saved?.settings ?? {});
     this.addSettingTab(new LeetLogSettingTab(this.app, this));
     this.startServer();
   }
@@ -145,7 +168,7 @@ export default class LeetLogBridge extends Plugin {
     this.server?.close();
     const port = this.data.settings.port;
     this.server = http.createServer((req, res) => this.route(req, res));
-    this.server.on("error", (e: NodeJS.ErrnoException) => {
+    this.server.on("error", (e: { code?: string; message: string }) => {
       if (e.code === "EADDRINUSE") {
         new Notice(`LeetLog Bridge：端口 ${port} 被占用（是不是 Python 版服务还开着？）`, 8000);
       } else {
@@ -160,19 +183,19 @@ export default class LeetLogBridge extends Plugin {
 
   // ---------- HTTP ----------
 
-  private cors(res: http.ServerResponse) {
+  private cors(res: HttpServerResponse) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   }
 
-  private json(res: http.ServerResponse, code: number, obj: unknown) {
+  private json(res: HttpServerResponse, code: number, obj: unknown) {
     this.cors(res);
     res.writeHead(code, { "Content-Type": "application/json" });
     res.end(JSON.stringify(obj));
   }
 
-  private route(req: http.IncomingMessage, res: http.ServerResponse) {
+  private route(req: HttpIncomingMessage, res: HttpServerResponse) {
     if (req.method === "OPTIONS") { this.cors(res); res.writeHead(204); res.end(); return; }
 
     if (req.method === "GET" && req.url === "/ping") {
@@ -192,12 +215,13 @@ export default class LeetLogBridge extends Plugin {
 
     if (req.method === "POST" && req.url === "/event") {
       let body = "";
-      req.on("data", (c) => (body += c));
+      req.on("data", (c) => (body += String(c)));
       req.on("end", () => {
         // 串行处理，避免并发读写同一篇笔记
         this.busy = this.busy.then(async () => {
           try {
-            const ev = JSON.parse(body) as LeetLogEvent;
+            const parsed: unknown = JSON.parse(body);
+            const ev = parsed as LeetLogEvent;
             await this.handleEvent(ev);
             this.json(res, 200, { ok: true });
           } catch (e) {
@@ -360,6 +384,16 @@ export default class LeetLogBridge extends Plugin {
   }
 
   async resolveProblem(slug: string): Promise<ProblemMeta> {
+    interface QuestionResp {
+      data?: {
+        question?: {
+          questionFrontendId: string;
+          title: string;
+          difficulty: string;
+          topicTags?: Array<{ name: string }>;
+        };
+      };
+    }
     const url = `https://leetcode.com/problems/${slug}/description/`;
     try {
       const resp = await requestUrl({
@@ -371,11 +405,11 @@ export default class LeetLogBridge extends Plugin {
           variables: { s: slug },
         }),
       });
-      const q = resp.json?.data?.question;
+      const q = (resp.json as QuestionResp | undefined)?.data?.question;
       if (q) {
         return {
           id: parseInt(q.questionFrontendId), title: q.title, difficulty: q.difficulty,
-          tags: (q.topicTags ?? []).map((t: { name: string }) => t.name), url,
+          tags: (q.topicTags ?? []).map((t) => t.name), url,
         };
       }
     } catch (e) {

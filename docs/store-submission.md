@@ -6,16 +6,15 @@
 
 ## A. GitHub Release（Obsidian 上架的前置条件，先做这个）
 
-Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（`0.2.0`，不带 v 前缀），
+Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（当前 `0.2.1`，不带 v 前缀），
 且附件包含 `manifest.json` 和 `main.js`。一条命令搞定：
 
 ```bash
 cd ~/Desktop/Testall/Mine/leetlog
-gh release create 0.2.0 \
+gh release create 0.2.1 \
   obsidian-plugin/manifest.json \
   obsidian-plugin/main.js \
-  obsidian-plugin/versions.json \
-  --title "LeetLog 0.2.0 — extension + dual bridges + EN/zh templates" \
+  --title "LeetLog 0.2.1" \
   --notes "First public release: Chrome extension (MV3) + Python bridge + Obsidian plugin bridge. Auto-timing from first keystroke, submission counting, accepted-code capture into local Obsidian notes. 100% local."
 ```
 
@@ -138,3 +137,6 @@ Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install
 - [ ] README 安装章节改为商店链接优先，load-unpacked 降级为开发者方式
 - [ ] 发布帖：Obsidian 论坛 Share & Showcase 板块、r/ObsidianMD、V2EX/即刻（中文用户）
 - [ ] Firefox 版（manifest 加 `browser_specific_settings.gecko.id`，提交 addons.mozilla.org）
+- [ ] GitHub Action 构建 release 并生成 artifact attestations（actions/attest-build-provenance，回应审查建议）
+
+> 注意：release 资产只放 `manifest.json` + `main.js`（审查建议不要附 versions.json；它保留在仓库里即可）

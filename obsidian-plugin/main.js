@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,14 +15,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // main.ts
@@ -34,7 +24,7 @@ __export(main_exports, {
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
-var http = __toESM(require("http"));
+var http = window.require("http");
 var DEFAULTS = {
   settings: { port: 8763, folder: "LeetCode", lang: "zh" },
   state: {}
@@ -123,8 +113,9 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
   busy = Promise.resolve();
   // 事件串行化（等价 Python 版的锁）
   async onload() {
-    this.data = Object.assign({}, DEFAULTS, await this.loadData());
-    this.data.settings = Object.assign({}, DEFAULTS.settings, this.data.settings);
+    const saved = await this.loadData();
+    this.data = Object.assign({}, DEFAULTS, saved ?? {});
+    this.data.settings = Object.assign({}, DEFAULTS.settings, saved?.settings ?? {});
     this.addSettingTab(new LeetLogSettingTab(this.app, this));
     this.startServer();
   }
@@ -183,11 +174,12 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     }
     if (req.method === "POST" && req.url === "/event") {
       let body = "";
-      req.on("data", (c) => body += c);
+      req.on("data", (c) => body += String(c));
       req.on("end", () => {
         this.busy = this.busy.then(async () => {
           try {
-            const ev = JSON.parse(body);
+            const parsed = JSON.parse(body);
+            const ev = parsed;
             await this.handleEvent(ev);
             this.json(res, 200, { ok: true });
           } catch (e) {
