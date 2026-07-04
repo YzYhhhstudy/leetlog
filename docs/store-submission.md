@@ -89,8 +89,10 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
     `Send captured practice events to the user's own local bridge application. No external hosts are contacted.`
   - `content_scripts on leetcode.com/leetcode.cn problem pages` →
     `Detect when the user starts typing (timing signal) and read the user's own submissions and judge results in order to log them locally.`
-- **数据使用（Data usage）**：勾选收集 "User activity"（说明：typing-start signal and the
-  user's own submitted code）→ 声明 **数据不出设备、不出售、不用于无关用途、无远程代码**。
+- **数据使用（Data usage）**：勾选两项——
+  **"User activity"**（对应：打字开始信号 + 拦截自己的 submit/判题网络请求）与
+  **"Website content"**（对应：题目标题/难度/标签/链接、用户提交的代码文本、判题结果）
+  → 三条 certify 全勾（不出售/不用于无关用途/不用于信贷评估），并声明 **无远程代码**。
 - **Privacy policy URL**：`https://github.com/YzYhhhstudy/leetlog/blob/master/PRIVACY.md`
 
 ### 5. 给审核员的备注（Review notes，可选但强烈建议）
