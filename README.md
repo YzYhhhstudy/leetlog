@@ -165,9 +165,12 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 
 ## ❤️ Support
 
-LeetLog is free and local-first, and will stay that way. If it saves you time,
-consider [sponsoring on GitHub](https://github.com/sponsors/YzYhhhstudy) — it keeps the
-roadmap moving.
+LeetLog is free and local-first, and will stay that way. If it saves you time:
+
+- ⭐ **Star this repo** — costs nothing, helps other grinders find it
+- 💖 **[Sponsor on GitHub](https://github.com/sponsors/YzYhhhstudy)** — keeps the roadmap moving
+
+[![Star History Chart](https://api.star-history.com/svg?repos=YzYhhhstudy/leetlog&type=Date)](https://star-history.com/#YzYhhhstudy/leetlog&Date)
 
 ## License
 
