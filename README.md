@@ -162,6 +162,12 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 - [ ] `lc import`: split legacy hand-written notes into per-problem files
 - [ ] Count Run (non-submit) executions
 
+## ❤️ Support
+
+LeetLog is free and local-first, and will stay that way. If it saves you time,
+consider [sponsoring on GitHub](https://github.com/sponsors/YzYhhhstudy) — it keeps the
+roadmap moving.
+
 ## License
 
 MIT

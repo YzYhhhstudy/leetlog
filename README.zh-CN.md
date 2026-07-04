@@ -156,6 +156,11 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - [ ] `lc import`：把旧的手写笔记拆分导入
 - [ ] Run（不提交的测试运行）次数统计
 
+## ❤️ 支持
+
+LeetLog 免费、本地优先，并将一直如此。如果它帮你省了时间，
+欢迎 [GitHub Sponsors 赞助](https://github.com/sponsors/YzYhhhstudy)，让 Roadmap 跑得更快。
+
 ## License
 
 MIT

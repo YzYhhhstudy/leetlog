@@ -1,7 +1,8 @@
 fetch("http://127.0.0.1:8763/ping")
   .then((r) => r.json())
   .then((d) => {
-    document.getElementById("status").innerHTML = `<span class="ok">🟢 本地服务运行中</span>`;
+    const bridge = d.bridge === "obsidian-plugin" ? "Obsidian 插件" : "Python 服务";
+    document.getElementById("status").innerHTML = `<span class="ok">🟢 本地服务运行中</span>（${bridge}）`;
     document.getElementById("info").innerHTML =
       `笔记位置：<b>${d.folder}</b><br>` +
       `Vault：<b>${d.vault}</b><br>` +

@@ -1,0 +1,10 @@
+{
+  "id": "leetlog-bridge",
+  "name": "LeetLog Bridge",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Receives events from the LeetLog browser extension and auto-writes LeetCode practice notes (timing, submissions, accepted code) into your vault. 接收 LeetLog 浏览器扩展事件，自动生成刷题笔记。",
+  "author": "YzYhhhstudy",
+  "authorUrl": "https://github.com/YzYhhhstudy/leetlog",
+  "isDesktopOnly": true
+}

@@ -1,0 +1,16 @@
+{
+  "name": "leetlog-bridge",
+  "version": "0.1.0",
+  "description": "Obsidian-side bridge for LeetLog",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild main.ts --bundle --external:obsidian --external:electron --format=cjs --target=es2022 --platform=node --outfile=main.js",
+    "dev": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.21.0",
+    "obsidian": "^1.5.7",
+    "typescript": "^5.4.0"
+  }
+}
