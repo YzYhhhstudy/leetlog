@@ -98,10 +98,24 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
 ### 5. 给审核员的备注（Review notes，可选但强烈建议）
 
 ```
-This extension only communicates with a bridge on the user's own machine (127.0.0.1).
-No data leaves the device. Full source code: https://github.com/YzYhhhstudy/leetlog
-To test: run `python3 server/leetlog_server.py` from the repo, open any LeetCode problem,
-type in the editor, submit — a Markdown note is created locally.
+No account or login is required.
+
+The extension communicates only with a bridge on the user's own machine
+(http://127.0.0.1:8763). No data is transmitted to any external server.
+Source code: https://github.com/YzYhhhstudy/leetlog
+
+Fastest test (no Obsidian needed):
+1. Download server/leetlog_server.py from the repo and run: python3 leetlog_server.py
+   (Python 3 standard library only)
+2. Open any problem, e.g. https://leetcode.com/problems/two-sum/
+3. Type in the code editor, then submit a solution.
+4. A Markdown note (timing, submission count, accepted code) is written to the
+   notes folder printed at server startup (defaults to ~/LeetLogNotes/LeetCode).
+
+End users typically install the "LeetLog Bridge" Obsidian community plugin
+instead; both expose the same localhost API. With no bridge running, the
+extension stays idle — the popup shows a disconnected status and nothing is
+transmitted anywhere.
 ```
 
 审核通常 1~3 个工作日。被打回最常见原因是权限理由写得含糊——上面的文案已按官方口径写好。
