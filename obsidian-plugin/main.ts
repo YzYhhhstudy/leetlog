@@ -3,7 +3,7 @@
  * 在 Obsidian 内监听 127.0.0.1:<port>，接收 LeetLog 浏览器扩展的事件，
  * 通过 Obsidian Vault API 写刷题笔记。与 Python 版 leetlog_server.py 接口完全一致。
  */
-import { App, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath, requestUrl } from "obsidian";
 
 // Obsidian 桌面端（Electron 渲染进程）通过 require 提供 Node 的 http 模块。
 // 这里用最小化的自持类型声明，避免依赖 @types/node（社区审查的 lint 环境没有它）。
@@ -203,7 +203,9 @@ export default class LeetLogBridge extends Plugin {
       const active = Object.entries(this.data.state)
         .filter(([, s]) => !s.closed && now - s.last_seen < SESSION_GAP)
         .map(([slug]) => slug);
-      const folder = this.app.vault.getFolderByPath(normalizePath(this.data.settings.folder));
+      // getAbstractFileByPath + instanceof：兼容老版本 Obsidian（getFolderByPath 是较新 API）
+      const af = this.app.vault.getAbstractFileByPath(normalizePath(this.data.settings.folder));
+      const folder = af instanceof TFolder ? af : null;
       const notes = folder ? folder.children.filter((f) => f instanceof TFile && /^\d/.test(f.name)).length : 0;
       this.json(res, 200, {
         ok: true, bridge: "obsidian-plugin",
@@ -434,7 +436,7 @@ export default class LeetLogBridge extends Plugin {
   async writeNote(path: string, text: string) {
     const norm = normalizePath(path);
     const dir = norm.split("/").slice(0, -1).join("/");
-    if (dir && !this.app.vault.getFolderByPath(dir)) {
+    if (dir && !(this.app.vault.getAbstractFileByPath(dir) instanceof TFolder)) {
       await this.app.vault.createFolder(dir).catch(() => {});
     }
     const f = this.noteFile(norm);

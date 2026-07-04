@@ -160,7 +160,8 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     if (req.method === "GET" && req.url === "/ping") {
       const now = Date.now() / 1e3;
       const active = Object.entries(this.data.state).filter(([, s]) => !s.closed && now - s.last_seen < SESSION_GAP).map(([slug]) => slug);
-      const folder = this.app.vault.getFolderByPath((0, import_obsidian.normalizePath)(this.data.settings.folder));
+      const af = this.app.vault.getAbstractFileByPath((0, import_obsidian.normalizePath)(this.data.settings.folder));
+      const folder = af instanceof import_obsidian.TFolder ? af : null;
       const notes = folder ? folder.children.filter((f) => f instanceof import_obsidian.TFile && /^\d/.test(f.name)).length : 0;
       this.json(res, 200, {
         ok: true,
@@ -383,7 +384,7 @@ ${this.S.sections}`;
   async writeNote(path, text) {
     const norm = (0, import_obsidian.normalizePath)(path);
     const dir = norm.split("/").slice(0, -1).join("/");
-    if (dir && !this.app.vault.getFolderByPath(dir)) {
+    if (dir && !(this.app.vault.getAbstractFileByPath(dir) instanceof import_obsidian.TFolder)) {
       await this.app.vault.createFolder(dir).catch(() => {
       });
     }
