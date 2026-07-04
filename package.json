@@ -1,0 +1,19 @@
+{
+  "name": "leetlog",
+  "version": "0.2.2",
+  "private": true,
+  "description": "LeetLog — auto-capture your LeetCode practice into local Obsidian notes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YzYhhhstudy/leetlog.git"
+  },
+  "scripts": {
+    "build": "npm run build --prefix obsidian-plugin"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "obsidian": "^1.5.7",
+    "typescript": "^5.4.0"
+  }
+}
