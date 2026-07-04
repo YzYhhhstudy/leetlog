@@ -97,6 +97,20 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
 
 ### 5. 给审核员的备注（Review notes，可选但强烈建议）
 
+> ⚠️ CWS 的 "Additional instructions" 字段上限 **500 字符**，直接粘贴下面这个压缩版（486 字符）：
+
+```
+No account or login required.
+
+Talks only to a local bridge on the user's machine (http://127.0.0.1:8763); no data leaves the device. Source: https://github.com/YzYhhhstudy/leetlog
+
+Test: run server/leetlog_server.py (Python 3 stdlib only). Open https://leetcode.com/problems/two-sum/, type in the editor, submit. A Markdown note (timing, submissions, accepted code) appears in the folder printed at startup.
+
+With no bridge running, the extension stays idle (popup shows disconnected).
+```
+
+完整版（无字数限制的场合用，如申诉邮件）：
+
 ```
 No account or login is required.
 
