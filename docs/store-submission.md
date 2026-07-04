@@ -6,16 +6,16 @@
 
 ## A. GitHub Release（Obsidian 上架的前置条件，先做这个）
 
-Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（`0.1.0`，不带 v 前缀），
+Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（`0.2.0`，不带 v 前缀），
 且附件包含 `manifest.json` 和 `main.js`。一条命令搞定：
 
 ```bash
 cd ~/Desktop/Testall/Mine/leetlog
-gh release create 0.1.0 \
+gh release create 0.2.0 \
   obsidian-plugin/manifest.json \
   obsidian-plugin/main.js \
   obsidian-plugin/versions.json \
-  --title "LeetLog 0.1.0 — extension + dual bridges" \
+  --title "LeetLog 0.2.0 — extension + dual bridges + EN/zh templates" \
   --notes "First public release: Chrome extension (MV3) + Python bridge + Obsidian plugin bridge. Auto-timing from first keystroke, submission counting, accepted-code capture into local Obsidian notes. 100% local."
 ```
 
@@ -27,7 +27,7 @@ gh release create 0.1.0 \
 [chrome.google.com/webstore/devconsole](https://chrome.google.com/webstore/devconsole) → 一次性 $5 注册费。
 
 ### 2. 上传
-"New item" → 上传 `dist/leetlog-extension-0.2.0.zip`（已打好；以后更新跑
+"New item" → 上传 `dist/leetlog-extension-0.2.1.zip`（已打好；以后更新跑
 `cd extension && zip -r ../dist/leetlog-extension-<版本>.zip . -x ".*"`）。
 
 ### 3. 商店信息（Store listing）
@@ -75,7 +75,7 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
 需要本机运行一个桥接（推荐 LeetLog Bridge Obsidian 插件，或自带的 Python 服务），配置约 2 分钟，见 GitHub README。
 ```
 
-- **图标**：需要 128×128 PNG（待做：可从 📗 emoji 或自定 logo 生成）
+- **图标**：`extension/icons/icon-128.png`（已生成 ✓，商店 listing 直接上传这张）
 - **截图**：至少 1 张 1280×800。建议三张：
   1. LeetCode AC 页面 + Obsidian 笔记并排（最有说服力）
   2. 扩展 popup（🟢 状态面板）
@@ -112,7 +112,7 @@ type in the editor, submit — a Markdown note is created locally.
 ### 前置检查（都已满足 ✓）
 - [x] 公开仓库，含开源协议（MIT）
 - [x] `manifest.json` 位于**仓库根目录**（已从 obsidian-plugin/ 复制，两处保持同步）
-- [x] Release tag = manifest version（步骤 A 的 `0.1.0`）
+- [x] Release tag = manifest version（步骤 A 的 `0.2.0`）
 - [x] manifest description 为英文
 - [x] `isDesktopOnly: true`（用了 Node http，移动端不支持）
 

@@ -33,10 +33,51 @@ CONFIG_DIR = Path(os.environ.get("LEETLOG_CONFIG", str(Path.home() / ".config" /
 CONFIG_FILE = CONFIG_DIR / "config.json"
 CACHE_FILE = CONFIG_DIR / "problems.json"
 STATE_FILE = CONFIG_DIR / "state.json"
-WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
 SESSION_GAP = 6 * 3600          # 超过 6 小时没动静就视为新的一次做题
 LOCK = threading.Lock()
+
+# 笔记模板双语字符串表（config.json 里 "lang": "zh" | "en"）
+STRINGS = {
+    "zh": {
+        "weekdays": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+        "attempt": "第 {n} 次",
+        "start": "⏱ 开始 {t}",
+        "first_submit": "→ 首提 {t} · 编码 {m} 分钟",
+        "ac": lambda t, s, a: f"→ AC {t} · 提交 {s} 次 / 通过 {a} 次",
+        "submitted": lambda s: f"· 已提交 {s} 次（未 AC）",
+        "in_progress": "→ （进行中）",
+        "stay": "· 本题停留 {m} 分钟",
+        "code_header": "### ✅ 通过代码 · {lang} · {t}",
+        "sections": "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
+        "link": "题目链接",
+        "log_new": "🆕 {id}. {title} — 建立笔记",
+        "log_again": "📖 {id}. {title} — 第 {n} 次（上次 {last}）",
+        "log_ac": "✅ {slug} Accepted！编码 {m} 分钟（提交 {s} 次）→ 代码已存入笔记",
+        "log_leave": "👋 {slug} 会话结束（{reason}）· 本题停留 {m} 分钟",
+    },
+    "en": {
+        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "attempt": "Attempt {n}",
+        "start": "⏱ start {t}",
+        "first_submit": "→ first submit {t} · coding {m} min",
+        "ac": lambda t, s, a: f"→ AC {t} · {s} submit{'s' if s != 1 else ''} / {a} AC",
+        "submitted": lambda s: f"· {s} submitted (no AC yet)",
+        "in_progress": "→ (in progress)",
+        "stay": "· {m} min on problem",
+        "code_header": "### ✅ Accepted · {lang} · {t}",
+        "sections": "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
+        "link": "Problem link",
+        "log_new": "🆕 {id}. {title} — note created",
+        "log_again": "📖 {id}. {title} — attempt {n} (last: {last})",
+        "log_ac": "✅ {slug} Accepted! coding {m} min ({s} submits) → code saved to note",
+        "log_leave": "👋 {slug} session ended ({reason}) · {m} min on problem",
+    },
+}
+
+
+def get_strings(cfg):
+    return STRINGS.get(cfg.get("lang", "zh"), STRINGS["zh"])
 
 # 语言名 → Markdown 代码块标记
 LANG_MD = {
@@ -67,6 +108,7 @@ def load_config():
     cfg = {
         "vault": detect_obsidian_vault() or str(Path.home() / "LeetLogNotes"),
         "folder": "LeetCode",
+        "lang": "zh",
     }
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     CONFIG_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
@@ -158,7 +200,7 @@ def note_path(cfg, prob, slug):
     return folder / f"{prob['id']:04d}-{slug}.md"
 
 
-def new_note(prob, now):
+def new_note(prob, now, S):
     tags = ", ".join(prob["tags"])
     return f"""---
 id: {prob['id']}
@@ -175,67 +217,59 @@ total_ac: 0
 
 # {prob['id']}. {prob['title']}
 
-> {prob['difficulty']} · {' / '.join(prob['tags']) or '—'} · [题目链接]({prob['url']})
+> {prob['difficulty']} · {' / '.join(prob['tags']) or '—'} · [{S['link']}]({prob['url']})
 """
 
 
 ATTEMPT_TMPL = """
 
-## 第 {n} 次 · {date} {weekday}
+## {attempt} · {date} {weekday}
 {timer}
 
-### 💭 思路 & 感悟
--
-
-### 📚 学到了什么（新函数 / 新数据结构 / 新套路）
--
-
-### 🔀 多种解法
--
-"""
+{sections}"""
 
 
 def _mins(a, b):
     return max(1, round((b - a) / 60))
 
 
-def timer_line(sess):
+def timer_line(sess, S):
     """根据会话状态生成 ⏱ 行（幂等重写）。计时语义：
        编码 = 首次击键 → 首次提交；本题停留 = 首次击键 → 离开页面/换题
     """
     s = datetime.fromtimestamp(sess["start"])
-    parts = [f"⏱ 开始 {s:%H:%M}"]
+    parts = [S["start"].format(t=f"{s:%H:%M}")]
     fs = sess.get("first_submit")
     if fs:
-        parts.append(f"→ 首提 {datetime.fromtimestamp(fs):%H:%M} · 编码 {_mins(sess['start'], fs)} 分钟")
+        parts.append(S["first_submit"].format(t=f"{datetime.fromtimestamp(fs):%H:%M}", m=_mins(sess['start'], fs)))
     if sess.get("first_ac"):
         fa = datetime.fromtimestamp(sess["first_ac"])
-        parts.append(f"→ AC {fa:%H:%M} · 提交 {sess['submits']} 次 / 通过 {sess['acs']} 次")
+        parts.append(S["ac"](f"{fa:%H:%M}", sess['submits'], sess['acs']))
     elif sess["submits"]:
-        parts.append(f"· 已提交 {sess['submits']} 次（未 AC）")
+        parts.append(S["submitted"](sess['submits']))
     elif not sess.get("closed"):
-        parts.append("→ （进行中）")
+        parts.append(S["in_progress"])
     if sess.get("closed"):
-        parts.append(f"· 本题停留 {_mins(sess['start'], sess['last_seen'])} 分钟")
+        parts.append(S["stay"].format(m=_mins(sess['start'], sess['last_seen'])))
     return " ".join(parts)
 
 
-def rewrite_timer_line(text, sess):
+def rewrite_timer_line(text, sess, S):
     lines = text.split("\n")
     for i in range(len(lines) - 1, -1, -1):
         if lines[i].startswith("⏱"):
-            lines[i] = timer_line(sess)
+            lines[i] = timer_line(sess, S)
             return "\n".join(lines)
     return text
 
 
-def insert_code_block(text, sess, ev):
+def insert_code_block(text, sess, ev, S):
     """把 AC 代码插到当前（最后一段）⏱ 行之后、感悟区之前"""
     now = datetime.fromtimestamp(ev.get("ts", time.time()))
     lang = (ev.get("lang") or "").strip()
     md_lang = LANG_MD.get(lang.lower(), lang.lower() or "text")
     perf = " · ".join(x for x in [ev.get("runtime", ""), ev.get("memory", "")] if x)
-    header = f"### ✅ 通过代码 · {lang or '?'} · {now:%H:%M}" + (f"（{perf}）" if perf else "")
+    header = S["code_header"].format(lang=lang or '?', t=f"{now:%H:%M}") + (f"（{perf}）" if S is STRINGS["zh"] and perf else (f" ({perf})" if perf else ""))
     block = f"\n{header}\n```{md_lang}\n{(ev.get('code') or '').rstrip()}\n```\n"
     idx = text.rfind("⏱")
     line_end = text.find("\n", idx)
@@ -268,10 +302,11 @@ def close_session(state, slug, ts, reason=""):
         sess["last_seen"] = max(sess.get("last_seen", ts), ts)
     sess["closed"] = True
     try:
+        S = get_strings(load_config())
         path = Path(sess["path"])
-        path.write_text(rewrite_timer_line(path.read_text(), sess))
+        path.write_text(rewrite_timer_line(path.read_text(), sess, S))
         stay = _mins(sess["start"], sess["last_seen"])
-        print(f"👋 {slug} 会话结束（{reason}）· 本题停留 {stay} 分钟")
+        print(S["log_leave"].format(slug=slug, reason=reason, m=stay))
     except Exception as e:
         print(f"⚠️ 结算 {slug} 失败：{e}")
 
@@ -286,6 +321,7 @@ def ensure_attempt(cfg, state, slug, ts):
         sess["closed"] = False   # 离开后又回来：视为同一次做题，继续累计
         return sess
 
+    S = get_strings(cfg)
     prob = resolve_problem(slug)
     now = datetime.fromtimestamp(ts)
     path = note_path(cfg, prob, slug)
@@ -293,18 +329,19 @@ def ensure_attempt(cfg, state, slug, ts):
         text = path.read_text()
         n = int(fm_get(text, "attempts") or 0) + 1
         prev_last = fm_get(text, "last_attempt")
-        print(f"📖 {prob['id']}. {prob['title']} — 第 {n} 次（上次 {prev_last}）")
+        print(S["log_again"].format(id=prob['id'], title=prob['title'], n=n, last=prev_last))
     else:
-        text = new_note(prob, now)
+        text = new_note(prob, now, S)
         n = 1
-        print(f"🆕 {prob['id']}. {prob['title']} — 建立笔记")
+        print(S["log_new"].format(id=prob['id'], title=prob['title']))
     text = fm_set(text, "attempts", n)
     text = fm_set(text, "last_attempt", f"{now:%Y-%m-%d}")
     sess = {"start": ts, "last_seen": ts, "submits": 0, "acs": 0,
             "first_submit": None, "first_ac": None, "closed": False,
             "path": str(path), "n": n}
-    text += ATTEMPT_TMPL.format(n=n, date=f"{now:%Y-%m-%d}",
-                                weekday=WEEKDAYS[now.weekday()], timer=timer_line(sess))
+    text += ATTEMPT_TMPL.format(attempt=S["attempt"].format(n=n), date=f"{now:%Y-%m-%d}",
+                                weekday=S["weekdays"][now.weekday()],
+                                timer=timer_line(sess, S), sections=S["sections"])
     path.write_text(text)
     state[slug] = sess
     return sess
@@ -331,6 +368,7 @@ def handle_event(ev):
                 if other != slug:
                     close_session(state, other, ts, f"切换到 {slug}")
 
+        S = get_strings(cfg)
         sess = ensure_attempt(cfg, state, slug, ts)
         path = Path(sess["path"])
         text = path.read_text()
@@ -345,15 +383,15 @@ def handle_event(ev):
                 if not sess["first_ac"]:
                     sess["first_ac"] = ts
                 if ev.get("code"):
-                    text = insert_code_block(text, sess, ev)
+                    text = insert_code_block(text, sess, ev, S)
                 text = fm_set(text, "total_ac", int(fm_get(text, "total_ac") or 0) + 1)
                 coding = _mins(sess["start"], sess["first_submit"])
-                print(f"✅ {slug} Accepted！编码 {coding} 分钟（提交 {sess['submits']} 次）→ 代码已存入笔记")
+                print(S["log_ac"].format(slug=slug, m=coding, s=sess['submits']))
             else:
                 print(f"📝 {slug} {status}（第 {sess['submits']} 次提交）")
             text = fm_set(text, "total_submissions", int(fm_get(text, "total_submissions") or 0) + 1)
 
-        text = rewrite_timer_line(text, sess)
+        text = rewrite_timer_line(text, sess, S)
         path.write_text(text)
         sess["last_seen"] = ts
         save_state(state)

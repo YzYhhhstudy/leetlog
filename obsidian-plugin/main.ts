@@ -23,6 +23,7 @@ interface Session {
 interface LeetLogSettings {
   port: number;
   folder: string;
+  lang: "zh" | "en";   // 笔记模板语言 / note template language
 }
 
 interface PersistedData {
@@ -50,12 +51,51 @@ interface ProblemMeta {
 }
 
 const DEFAULTS: PersistedData = {
-  settings: { port: 8763, folder: "LeetCode" },
+  settings: { port: 8763, folder: "LeetCode", lang: "zh" },
   state: {},
 };
 
 const SESSION_GAP = 6 * 3600; // 超过 6 小时视为新的一次做题
-const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+// 笔记模板双语字符串表
+const STRINGS = {
+  zh: {
+    weekdays: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+    attempt: (n: number) => `第 ${n} 次`,
+    start: (t: string) => `⏱ 开始 ${t}`,
+    firstSubmit: (t: string, m: number) => `→ 首提 ${t} · 编码 ${m} 分钟`,
+    ac: (t: string, s: number, a: number) => `→ AC ${t} · 提交 ${s} 次 / 通过 ${a} 次`,
+    submitted: (s: number) => `· 已提交 ${s} 次（未 AC）`,
+    inProgress: "→ （进行中）",
+    stay: (m: number) => `· 本题停留 ${m} 分钟`,
+    codeHeader: (lang: string, t: string, perf: string) =>
+      `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
+    sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
+    link: "题目链接",
+    nNew: (id: number, title: string) => `🆕 ${id}. ${title} — 建立笔记`,
+    nAgain: (id: number, title: string, n: number, last: string | null) =>
+      `📖 ${id}. ${title} — 第 ${n} 次（上次 ${last ?? "?"}）`,
+    nAccepted: (slug: string, m: number) => `✅ ${slug} Accepted！编码 ${m} 分钟 → 已存入笔记`,
+  },
+  en: {
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    attempt: (n: number) => `Attempt ${n}`,
+    start: (t: string) => `⏱ start ${t}`,
+    firstSubmit: (t: string, m: number) => `→ first submit ${t} · coding ${m} min`,
+    ac: (t: string, s: number, a: number) => `→ AC ${t} · ${s} submit${s > 1 ? "s" : ""} / ${a} AC`,
+    submitted: (s: number) => `· ${s} submitted (no AC yet)`,
+    inProgress: "→ (in progress)",
+    stay: (m: number) => `· ${m} min on problem`,
+    codeHeader: (lang: string, t: string, perf: string) =>
+      `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
+    sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
+    link: "Problem link",
+    nNew: (id: number, title: string) => `🆕 ${id}. ${title} — note created`,
+    nAgain: (id: number, title: string, n: number, last: string | null) =>
+      `📖 ${id}. ${title} — attempt ${n} (last: ${last ?? "?"})`,
+    nAccepted: (slug: string, m: number) => `✅ ${slug} Accepted! coding ${m} min → saved to note`,
+  },
+} as const;
 const LANG_MD: Record<string, string> = {
   python3: "python", python: "python", cpp: "cpp", "c++": "cpp", java: "java",
   javascript: "javascript", typescript: "typescript", golang: "go", go: "go",
@@ -202,7 +242,7 @@ export default class LeetLogBridge extends Plugin {
         if (!sess.first_ac) sess.first_ac = ts;
         if (ev.code) text = this.insertCodeBlock(text, ev, ts);
         text = fmSet(text, "total_ac", parseInt(fmGet(text, "total_ac") ?? "0") + 1);
-        new Notice(`✅ ${slug} Accepted！编码 ${mins(sess.start, sess.first_submit)} 分钟 → 已存入笔记`);
+        new Notice(this.S.nAccepted(slug, mins(sess.start, sess.first_submit)));
       }
       text = fmSet(text, "total_submissions", parseInt(fmGet(text, "total_submissions") ?? "0") + 1);
     }
@@ -213,13 +253,18 @@ export default class LeetLogBridge extends Plugin {
     await this.saveData(this.data);
   }
 
+  get S() {
+    return STRINGS[this.data.settings.lang] ?? STRINGS.zh;
+  }
+
   timerLine(s: Session): string {
-    const parts = [`⏱ 开始 ${hm(s.start)}`];
-    if (s.first_submit) parts.push(`→ 首提 ${hm(s.first_submit)} · 编码 ${mins(s.start, s.first_submit)} 分钟`);
-    if (s.first_ac) parts.push(`→ AC ${hm(s.first_ac)} · 提交 ${s.submits} 次 / 通过 ${s.acs} 次`);
-    else if (s.submits) parts.push(`· 已提交 ${s.submits} 次（未 AC）`);
-    else if (!s.closed) parts.push("→ （进行中）");
-    if (s.closed) parts.push(`· 本题停留 ${mins(s.start, s.last_seen)} 分钟`);
+    const S = this.S;
+    const parts = [S.start(hm(s.start))];
+    if (s.first_submit) parts.push(S.firstSubmit(hm(s.first_submit), mins(s.start, s.first_submit)));
+    if (s.first_ac) parts.push(S.ac(hm(s.first_ac), s.submits, s.acs));
+    else if (s.submits) parts.push(S.submitted(s.submits));
+    else if (!s.closed) parts.push(S.inProgress);
+    if (s.closed) parts.push(S.stay(mins(s.start, s.last_seen)));
     return parts.join(" ");
   }
 
@@ -235,7 +280,7 @@ export default class LeetLogBridge extends Plugin {
     const lang = (ev.lang ?? "").trim();
     const mdLang = LANG_MD[lang.toLowerCase()] ?? (lang.toLowerCase() || "text");
     const perf = [ev.runtime, ev.memory].filter(Boolean).join(" · ");
-    const header = `### ✅ 通过代码 · ${lang || "?"} · ${hm(ts)}` + (perf ? `（${perf}）` : "");
+    const header = this.S.codeHeader(lang || "?", hm(ts), perf);
     const block = `\n${header}\n\`\`\`${mdLang}\n${(ev.code ?? "").trimEnd()}\n\`\`\`\n`;
     const idx = text.lastIndexOf("⏱");
     const lineEnd = text.indexOf("\n", idx);
@@ -273,10 +318,10 @@ export default class LeetLogBridge extends Plugin {
     if (file) {
       text = await this.app.vault.read(file);
       n = parseInt(fmGet(text, "attempts") ?? "0") + 1;
-      new Notice(`📖 ${prob.id}. ${prob.title} — 第 ${n} 次（上次 ${fmGet(text, "last_attempt")}）`);
+      new Notice(this.S.nAgain(prob.id, prob.title, n, fmGet(text, "last_attempt")));
     } else {
       text = this.newNote(prob, ts);
-      new Notice(`🆕 ${prob.id}. ${prob.title} — 建立笔记`);
+      new Notice(this.S.nNew(prob.id, prob.title));
     }
     text = fmSet(text, "attempts", n);
     text = fmSet(text, "last_attempt", ymd(ts));
@@ -286,7 +331,7 @@ export default class LeetLogBridge extends Plugin {
       first_submit: null, first_ac: null, closed: false, path, n,
     };
     const d = new Date(ts * 1000);
-    text += `\n\n## 第 ${n} 次 · ${ymd(ts)} ${WEEKDAYS[d.getDay()]}\n${this.timerLine(sess)}\n\n### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n`;
+    text += `\n\n## ${this.S.attempt(n)} · ${ymd(ts)} ${this.S.weekdays[d.getDay()]}\n${this.timerLine(sess)}\n\n${this.S.sections}`;
     await this.writeNote(path, text);
     this.data.state[slug] = sess;
     return sess;
@@ -309,7 +354,7 @@ export default class LeetLogBridge extends Plugin {
       "",
       `# ${p.id}. ${p.title}`,
       "",
-      `> ${p.difficulty} · ${p.tags.join(" / ") || "—"} · [题目链接](${p.url})`,
+      `> ${p.difficulty} · ${p.tags.join(" / ") || "—"} · [${this.S.link}](${p.url})`,
       "",
     ].join("\n");
   }
@@ -400,6 +445,19 @@ class LeetLogSettingTab extends PluginSettingTab {
           this.plugin.data.settings.folder = v.trim() || "LeetCode";
           await this.plugin.saveData(this.plugin.data);
         })
+      );
+
+    new Setting(containerEl)
+      .setName("笔记语言 / Note language")
+      .setDesc("生成的笔记模板语言（标题、计时行、感悟分区）。已有笔记不受影响，只作用于之后的新记录。")
+      .addDropdown((dd) =>
+        dd.addOption("zh", "中文")
+          .addOption("en", "English")
+          .setValue(this.plugin.data.settings.lang)
+          .onChange(async (v) => {
+            this.plugin.data.settings.lang = (v === "en" ? "en" : "zh");
+            await this.plugin.saveData(this.plugin.data);
+          })
       );
   }
 }

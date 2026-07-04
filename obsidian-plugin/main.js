@@ -36,11 +36,44 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var http = __toESM(require("http"));
 var DEFAULTS = {
-  settings: { port: 8763, folder: "LeetCode" },
+  settings: { port: 8763, folder: "LeetCode", lang: "zh" },
   state: {}
 };
 var SESSION_GAP = 6 * 3600;
-var WEEKDAYS = ["\u5468\u65E5", "\u5468\u4E00", "\u5468\u4E8C", "\u5468\u4E09", "\u5468\u56DB", "\u5468\u4E94", "\u5468\u516D"];
+var STRINGS = {
+  zh: {
+    weekdays: ["\u5468\u65E5", "\u5468\u4E00", "\u5468\u4E8C", "\u5468\u4E09", "\u5468\u56DB", "\u5468\u4E94", "\u5468\u516D"],
+    attempt: (n) => `\u7B2C ${n} \u6B21`,
+    start: (t) => `\u23F1 \u5F00\u59CB ${t}`,
+    firstSubmit: (t, m) => `\u2192 \u9996\u63D0 ${t} \xB7 \u7F16\u7801 ${m} \u5206\u949F`,
+    ac: (t, s, a) => `\u2192 AC ${t} \xB7 \u63D0\u4EA4 ${s} \u6B21 / \u901A\u8FC7 ${a} \u6B21`,
+    submitted: (s) => `\xB7 \u5DF2\u63D0\u4EA4 ${s} \u6B21\uFF08\u672A AC\uFF09`,
+    inProgress: "\u2192 \uFF08\u8FDB\u884C\u4E2D\uFF09",
+    stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
+    codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
+    sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
+    link: "\u9898\u76EE\u94FE\u63A5",
+    nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 \u5EFA\u7ACB\u7B14\u8BB0`,
+    nAgain: (id, title, n, last) => `\u{1F4D6} ${id}. ${title} \u2014 \u7B2C ${n} \u6B21\uFF08\u4E0A\u6B21 ${last ?? "?"}\uFF09`,
+    nAccepted: (slug, m) => `\u2705 ${slug} Accepted\uFF01\u7F16\u7801 ${m} \u5206\u949F \u2192 \u5DF2\u5B58\u5165\u7B14\u8BB0`
+  },
+  en: {
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    attempt: (n) => `Attempt ${n}`,
+    start: (t) => `\u23F1 start ${t}`,
+    firstSubmit: (t, m) => `\u2192 first submit ${t} \xB7 coding ${m} min`,
+    ac: (t, s, a) => `\u2192 AC ${t} \xB7 ${s} submit${s > 1 ? "s" : ""} / ${a} AC`,
+    submitted: (s) => `\xB7 ${s} submitted (no AC yet)`,
+    inProgress: "\u2192 (in progress)",
+    stay: (m) => `\xB7 ${m} min on problem`,
+    codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
+    sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
+    link: "Problem link",
+    nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 note created`,
+    nAgain: (id, title, n, last) => `\u{1F4D6} ${id}. ${title} \u2014 attempt ${n} (last: ${last ?? "?"})`,
+    nAccepted: (slug, m) => `\u2705 ${slug} Accepted! coding ${m} min \u2192 saved to note`
+  }
+};
 var LANG_MD = {
   python3: "python",
   python: "python",
@@ -192,7 +225,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
         if (!sess.first_ac) sess.first_ac = ts;
         if (ev.code) text = this.insertCodeBlock(text, ev, ts);
         text = fmSet(text, "total_ac", parseInt(fmGet(text, "total_ac") ?? "0") + 1);
-        new import_obsidian.Notice(`\u2705 ${slug} Accepted\uFF01\u7F16\u7801 ${mins(sess.start, sess.first_submit)} \u5206\u949F \u2192 \u5DF2\u5B58\u5165\u7B14\u8BB0`);
+        new import_obsidian.Notice(this.S.nAccepted(slug, mins(sess.start, sess.first_submit)));
       }
       text = fmSet(text, "total_submissions", parseInt(fmGet(text, "total_submissions") ?? "0") + 1);
     }
@@ -201,13 +234,17 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     sess.last_seen = ts;
     await this.saveData(this.data);
   }
+  get S() {
+    return STRINGS[this.data.settings.lang] ?? STRINGS.zh;
+  }
   timerLine(s) {
-    const parts = [`\u23F1 \u5F00\u59CB ${hm(s.start)}`];
-    if (s.first_submit) parts.push(`\u2192 \u9996\u63D0 ${hm(s.first_submit)} \xB7 \u7F16\u7801 ${mins(s.start, s.first_submit)} \u5206\u949F`);
-    if (s.first_ac) parts.push(`\u2192 AC ${hm(s.first_ac)} \xB7 \u63D0\u4EA4 ${s.submits} \u6B21 / \u901A\u8FC7 ${s.acs} \u6B21`);
-    else if (s.submits) parts.push(`\xB7 \u5DF2\u63D0\u4EA4 ${s.submits} \u6B21\uFF08\u672A AC\uFF09`);
-    else if (!s.closed) parts.push("\u2192 \uFF08\u8FDB\u884C\u4E2D\uFF09");
-    if (s.closed) parts.push(`\xB7 \u672C\u9898\u505C\u7559 ${mins(s.start, s.last_seen)} \u5206\u949F`);
+    const S = this.S;
+    const parts = [S.start(hm(s.start))];
+    if (s.first_submit) parts.push(S.firstSubmit(hm(s.first_submit), mins(s.start, s.first_submit)));
+    if (s.first_ac) parts.push(S.ac(hm(s.first_ac), s.submits, s.acs));
+    else if (s.submits) parts.push(S.submitted(s.submits));
+    else if (!s.closed) parts.push(S.inProgress);
+    if (s.closed) parts.push(S.stay(mins(s.start, s.last_seen)));
     return parts.join(" ");
   }
   rewriteTimerLine(text, sess) {
@@ -224,7 +261,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     const lang = (ev.lang ?? "").trim();
     const mdLang = LANG_MD[lang.toLowerCase()] ?? (lang.toLowerCase() || "text");
     const perf = [ev.runtime, ev.memory].filter(Boolean).join(" \xB7 ");
-    const header = `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang || "?"} \xB7 ${hm(ts)}` + (perf ? `\uFF08${perf}\uFF09` : "");
+    const header = this.S.codeHeader(lang || "?", hm(ts), perf);
     const block = `
 ${header}
 \`\`\`${mdLang}
@@ -264,10 +301,10 @@ ${(ev.code ?? "").trimEnd()}
     if (file) {
       text = await this.app.vault.read(file);
       n = parseInt(fmGet(text, "attempts") ?? "0") + 1;
-      new import_obsidian.Notice(`\u{1F4D6} ${prob.id}. ${prob.title} \u2014 \u7B2C ${n} \u6B21\uFF08\u4E0A\u6B21 ${fmGet(text, "last_attempt")}\uFF09`);
+      new import_obsidian.Notice(this.S.nAgain(prob.id, prob.title, n, fmGet(text, "last_attempt")));
     } else {
       text = this.newNote(prob, ts);
-      new import_obsidian.Notice(`\u{1F195} ${prob.id}. ${prob.title} \u2014 \u5EFA\u7ACB\u7B14\u8BB0`);
+      new import_obsidian.Notice(this.S.nNew(prob.id, prob.title));
     }
     text = fmSet(text, "attempts", n);
     text = fmSet(text, "last_attempt", ymd(ts));
@@ -285,18 +322,10 @@ ${(ev.code ?? "").trimEnd()}
     const d = new Date(ts * 1e3);
     text += `
 
-## \u7B2C ${n} \u6B21 \xB7 ${ymd(ts)} ${WEEKDAYS[d.getDay()]}
+## ${this.S.attempt(n)} \xB7 ${ymd(ts)} ${this.S.weekdays[d.getDay()]}
 ${this.timerLine(sess)}
 
-### \u{1F4AD} \u601D\u8DEF & \u611F\u609F
--
-
-### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09
--
-
-### \u{1F500} \u591A\u79CD\u89E3\u6CD5
--
-`;
+${this.S.sections}`;
     await this.writeNote(path, text);
     this.data.state[slug] = sess;
     return sess;
@@ -318,7 +347,7 @@ ${this.timerLine(sess)}
       "",
       `# ${p.id}. ${p.title}`,
       "",
-      `> ${p.difficulty} \xB7 ${p.tags.join(" / ") || "\u2014"} \xB7 [\u9898\u76EE\u94FE\u63A5](${p.url})`,
+      `> ${p.difficulty} \xB7 ${p.tags.join(" / ") || "\u2014"} \xB7 [${this.S.link}](${p.url})`,
       ""
     ].join("\n");
   }
@@ -393,6 +422,12 @@ var LeetLogSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(containerEl).setName("\u7B14\u8BB0\u6587\u4EF6\u5939").setDesc("\u5237\u9898\u7B14\u8BB0\u5B58\u653E\u7684 vault \u5185\u8DEF\u5F84").addText(
       (t) => t.setValue(this.plugin.data.settings.folder).onChange(async (v) => {
         this.plugin.data.settings.folder = v.trim() || "LeetCode";
+        await this.plugin.saveData(this.plugin.data);
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName("\u7B14\u8BB0\u8BED\u8A00 / Note language").setDesc("\u751F\u6210\u7684\u7B14\u8BB0\u6A21\u677F\u8BED\u8A00\uFF08\u6807\u9898\u3001\u8BA1\u65F6\u884C\u3001\u611F\u609F\u5206\u533A\uFF09\u3002\u5DF2\u6709\u7B14\u8BB0\u4E0D\u53D7\u5F71\u54CD\uFF0C\u53EA\u4F5C\u7528\u4E8E\u4E4B\u540E\u7684\u65B0\u8BB0\u5F55\u3002").addDropdown(
+      (dd) => dd.addOption("zh", "\u4E2D\u6587").addOption("en", "English").setValue(this.plugin.data.settings.lang).onChange(async (v) => {
+        this.plugin.data.settings.lang = v === "en" ? "en" : "zh";
         await this.plugin.saveData(this.plugin.data);
       })
     );

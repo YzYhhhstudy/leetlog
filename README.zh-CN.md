@@ -121,6 +121,7 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - **本题停留** = 敲下第一个键 → 关闭页面 / 切到另一道题（含提交后复盘、优化的时间）
 - AC 后继续优化再提交：代码块追加、计数继续累积
 - 离开后 6 小时内回来算同一次做题；超过则自动开"第 N+1 次"
+- 🌐 笔记模板语言可选 中文 / English（Obsidian 插件设置里切换，Python 版改 config 的 `lang`）
 
 ## 会话规则
 

@@ -125,6 +125,7 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
   (includes post-submit review & optimization)
 - Keep optimizing after AC: code blocks append, counters accumulate
 - Coming back within 6 hours counts as the same attempt; later opens "Attempt N+1"
+- 🌐 Note template language: English or 中文 (Obsidian plugin setting / `lang` in the Python config)
 
 ## Session rules
 
