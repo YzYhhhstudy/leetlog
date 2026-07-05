@@ -61,9 +61,13 @@
     const U = NW_UI[s.lang] || NW_UI.zh;
     $("openOptions").textContent = U.settings;
     $("status").textContent = U.checking;
-    chrome.storage.local.get("leetlog_queue").then((o) => {
+    chrome.storage.local.get(["leetlog_queue", "leetlog_cloud_queue"]).then((o) => {
       const n = (o.leetlog_queue || []).length;
-      if (n) $("queue").innerHTML = `<span class="bad">${U.queue(n)}</span>`;
+      const cn = (o.leetlog_cloud_queue || []).length;
+      const parts = [];
+      if (n) parts.push(U.queue(n));
+      if (s.cloud && s.cloud.enabled && cn) parts.push(U.cloudPending(cn));
+      if (parts.length) $("queue").innerHTML = `<span class="bad">${parts.join("<br>")}</span>`;
     });
     if (s.mode === "folder") showFolderMode(U);
     else showBridgeMode(U);

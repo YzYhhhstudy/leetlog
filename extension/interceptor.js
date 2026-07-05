@@ -13,10 +13,12 @@
   const log = (...a) => console.debug("[LeetLog]", ...a);
   const slugOf = () => (location.pathname.match(/\/problems\/([^/?#]+)/) || [])[1] || null;
 
+  const SITE = location.hostname.endsWith("leetcode.cn") ? "cn" : "com";
+
   function emit(type, payload = {}, slugOverride) {
     const slug = slugOverride || slugOf();
     if (!slug) return;
-    window.postMessage({ source: "leetlog", type, slug, ts: Math.floor(Date.now() / 1000), ...payload }, "*");
+    window.postMessage({ source: "leetlog", type, slug, site: SITE, ts: Math.floor(Date.now() / 1000), ...payload }, "*");
   }
 
   // ---------- 1) 首次击键计时 ----------

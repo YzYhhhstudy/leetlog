@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LeetLog — LeetCode practice logger for Obsidian",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Typing starts the timer, submissions are counted, AC saves your code into local Obsidian notes. 100% local, zero upload.",
   "permissions": [
     "storage",

@@ -79,6 +79,17 @@ const NW_UI = {
     statusGranted: (name) => `🟢 已授权：${name}`,
     statusLost: (name) => `🔴 ${name} 的授权已失效（浏览器重启后需要重新授权一次）`,
     footer: "修改即时生效。切换模式不影响已积压的离线队列——队列会发往新的目标。",
+    secCloud: "云端同步（可选）",
+    cloudDesc: "把事件同时发送到 LeetLog Cloud：自动错题本、间隔复习提醒、仪表盘。本地笔记完全不受影响，随时可断开。",
+    cloudUrl: "服务地址",
+    cloudCode: "配对码",
+    cloudConnect: "连接",
+    cloudDisconnect: "断开",
+    cloudOn: (n) => `🟢 已连接（设备 #${n}）`,
+    cloudOff: "未连接",
+    cloudRevoked: "🔴 连接已失效（token 被吊销），请重新配对",
+    cloudBadCode: "配对失败：配对码无效或已过期",
+    cloudPending: (n) => `☁️ 云端待补发 ${n} 条`,
   },
   en: {
     settings: "⚙️ Settings",
@@ -116,6 +127,17 @@ const NW_UI = {
     statusGranted: (name) => `🟢 Granted: ${name}`,
     statusLost: (name) => `🔴 Permission for ${name} expired (needs one re-grant after a browser restart)`,
     footer: "Changes apply immediately. Switching modes keeps the offline queue — pending events go to the new target.",
+    secCloud: "Cloud sync (optional)",
+    cloudDesc: "Also send events to LeetLog Cloud: auto mistake notebook, spaced-repetition reminders, dashboards. Local notes are unaffected; disconnect anytime.",
+    cloudUrl: "Server URL",
+    cloudCode: "Pairing code",
+    cloudConnect: "Connect",
+    cloudDisconnect: "Disconnect",
+    cloudOn: (n) => `🟢 Connected (device #${n})`,
+    cloudOff: "Not connected",
+    cloudRevoked: "🔴 Connection expired (token revoked) — pair again",
+    cloudBadCode: "Pairing failed: invalid or expired code",
+    cloudPending: (n) => `☁️ ${n} events pending for cloud`,
   },
 };
 
@@ -188,7 +210,9 @@ async function nwDirStatus() {
 
 async function nwGetSettings() {
   const o = await chrome.storage.local.get("leetlog_settings");
-  return Object.assign({ mode: "bridge", lang: "zh" }, o.leetlog_settings || {});
+  const s = Object.assign({ mode: "bridge", lang: "zh" }, o.leetlog_settings || {});
+  s.cloud = Object.assign({ enabled: false, url: "", token: "" }, s.cloud || {});
+  return s;
 }
 
 async function nwGetSessions() {

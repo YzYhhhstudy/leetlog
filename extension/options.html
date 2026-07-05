@@ -40,6 +40,21 @@
   </div>
 </div>
 
+<h2 id="secCloud"></h2>
+<div class="card">
+  <div class="desc0" id="cloudDesc"></div>
+  <div style="margin-top:12px" id="cloudForm">
+    <div><span id="cloudUrlLabel"></span>
+      <input type="text" id="cloudUrl" value="http://127.0.0.1:8800" style="width:260px;background:#222937;color:#e8edf6;border:1px solid #2a3242;border-radius:6px;padding:5px 8px"></div>
+    <div style="margin-top:8px"><span id="cloudCodeLabel"></span>
+      <input type="text" id="cloudCode" placeholder="XXXXXXXX" maxlength="8"
+             style="width:140px;background:#222937;color:#e8edf6;border:1px solid #2a3242;border-radius:6px;padding:5px 8px;letter-spacing:3px;text-transform:uppercase">
+      <button id="cloudConnect"></button></div>
+  </div>
+  <div id="cloudStatus" style="margin-top:10px;font-size:13px"></div>
+  <button id="cloudDisconnect" class="ghost hidden" style="margin-top:8px"></button>
+</div>
+
 <h2 id="secLang"></h2>
 <div class="card">
   <select id="lang">

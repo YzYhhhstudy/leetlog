@@ -8,8 +8,10 @@ importScripts("note-writer.js");
 
 const SERVER = "http://127.0.0.1:8763/event";
 const QUEUE_KEY = "leetlog_queue";
+const CLOUD_QUEUE_KEY = "leetlog_cloud_queue"; // 云端独立队列：本地与云端各自的可用性互不拖累
 const MAX_QUEUE = 1000; // 超出丢最旧的，保住最近的 AC
-const ALARM = "leetlog-flush"; // 队列非空时每 30s 重试一轮
+const ALARM = "leetlog-flush"; // 任一队列非空时每 30s 重试一轮
+const CLOUD_BATCH = 200;
 
 // 队列操作全部串行，避免 alarm 重试与新事件并发读写 storage 打乱顺序
 let chain = Promise.resolve();
@@ -61,13 +63,69 @@ async function deliver(ev) {
   return post(ev);
 }
 
+// 每个事件分配单调递增 seq：云端 dedupe_key 的一部分（同秒两次 Run 也不会合并）
+async function nextSeq() {
+  const o = await chrome.storage.local.get("leetlog_seq");
+  const seq = (o.leetlog_seq || 0) + 1;
+  await chrome.storage.local.set({ leetlog_seq: seq });
+  return seq;
+}
+
+// ---------- 云端队列（可选，独立于本地队列） ----------
+
+async function getCloudQueue() {
+  const o = await chrome.storage.local.get(CLOUD_QUEUE_KEY);
+  return o[CLOUD_QUEUE_KEY] || [];
+}
+
+const saveCloudQueue = (q) => chrome.storage.local.set({ [CLOUD_QUEUE_KEY]: q });
+
+// 批量 POST 到云端。成功清出已发送段；401 = token 失效，自动断开避免队列无限膨胀
+async function flushCloud(settings) {
+  const cloud = settings.cloud || {};
+  if (!cloud.enabled || !cloud.token || !cloud.url) return 0;
+  let q = await getCloudQueue();
+  while (q.length) {
+    const batch = q.slice(0, CLOUD_BATCH);
+    let resp;
+    try {
+      resp = await fetch(cloud.url.replace(/\/$/, "") + "/v1/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cloud.token}` },
+        body: JSON.stringify({ events: batch }),
+      });
+    } catch (_) {
+      break; // 网络不可达，留队列
+    }
+    if (resp.status === 401) {
+      console.warn("[LeetLog] 云端 token 已失效，自动断开云同步（设置页可重新配对）");
+      const s = await nwGetSettings();
+      s.cloud = { ...s.cloud, enabled: false, error: "token-revoked" };
+      await chrome.storage.local.set({ leetlog_settings: s });
+      break;
+    }
+    if (!resp.ok) break; // 429/5xx：留队列等下轮
+    q = q.slice(batch.length);
+    await saveCloudQueue(q);
+  }
+  return q.length;
+}
+
 // 新事件先入队尾，再从队头逐条发送 —— 顺序永远与发生顺序一致
 async function enqueueAndFlush(ev) {
+  const settings = await nwGetSettings();
   let q = await getQueue();
   if (ev) {
+    ev.seq = await nextSeq();
     q.push(ev);
     if (q.length > MAX_QUEUE) q = q.slice(q.length - MAX_QUEUE);
     await saveQueue(q);
+    if (settings.cloud && settings.cloud.enabled) {
+      let cq = await getCloudQueue();
+      cq.push(ev);
+      if (cq.length > MAX_QUEUE) cq = cq.slice(cq.length - MAX_QUEUE);
+      await saveCloudQueue(cq);
+    }
   }
   while (q.length) {
     let delivered = false;
@@ -80,8 +138,9 @@ async function enqueueAndFlush(ev) {
     q.shift();
     await saveQueue(q); // 每处理一条就落盘，worker 被杀也不会重复补录
   }
-  await syncBadgeAndAlarm(q.length);
-  return { queued: q.length };
+  const cloudPending = await flushCloud(settings);
+  await syncBadgeAndAlarm(q.length + cloudPending);
+  return { queued: q.length, cloudQueued: cloudPending };
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

@@ -25,6 +25,31 @@
     $("secLang").textContent = U.secLang;
     $("langDesc").textContent = U.langDesc;
     $("footer").textContent = U.footer;
+    $("secCloud").textContent = U.secCloud;
+    $("cloudDesc").textContent = U.cloudDesc;
+    $("cloudUrlLabel").textContent = U.cloudUrl + "：";
+    $("cloudCodeLabel").textContent = U.cloudCode + "：";
+    $("cloudConnect").textContent = U.cloudConnect;
+    $("cloudDisconnect").textContent = U.cloudDisconnect;
+  }
+
+  async function refreshCloudStatus() {
+    const s = await nwGetSettings();
+    const el = $("cloudStatus");
+    const form = $("cloudForm");
+    const disc = $("cloudDisconnect");
+    if (s.cloud.enabled && s.cloud.token) {
+      el.innerHTML = `<span class="ok">${U.cloudOn(s.cloud.deviceId ?? "?")}</span>`;
+      form.classList.add("hidden");
+      disc.classList.remove("hidden");
+    } else {
+      el.innerHTML = s.cloud.error === "token-revoked"
+        ? `<span class="bad">${U.cloudRevoked}</span>`
+        : `<span class="warn">${U.cloudOff}</span>`;
+      form.classList.remove("hidden");
+      disc.classList.add("hidden");
+      if (s.cloud.url) $("cloudUrl").value = s.cloud.url;
+    }
   }
 
   async function refreshFolderStatus() {
@@ -61,6 +86,32 @@
     chrome.runtime.sendMessage({ source: "leetlog", type: "__flush" }).catch(() => {});
   });
 
+  $("cloudConnect").addEventListener("click", async () => {
+    const url = $("cloudUrl").value.trim().replace(/\/$/, "");
+    const code = $("cloudCode").value.trim().toUpperCase();
+    if (!url || !code) return;
+    try {
+      const r = await fetch(url + "/v1/pair/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, device_name: `chrome-${navigator.platform || "browser"}` }),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      const d = await r.json();
+      await saveSettings({ cloud: { enabled: true, url, token: d.token, deviceId: d.device_id } });
+      $("cloudCode").value = "";
+    } catch (_) {
+      $("cloudStatus").innerHTML = `<span class="bad">${U.cloudBadCode}</span>`;
+      return;
+    }
+    await refreshCloudStatus();
+  });
+
+  $("cloudDisconnect").addEventListener("click", async () => {
+    await saveSettings({ cloud: { enabled: false, url: "", token: "" } });
+    await refreshCloudStatus();
+  });
+
   $("modeBridge").addEventListener("change", () => saveSettings({ mode: "bridge" }));
   $("modeFolder").addEventListener("change", () => saveSettings({ mode: "folder" }));
   $("lang").addEventListener("change", async (e) => {
@@ -77,5 +128,6 @@
     ($(s.mode === "folder" ? "modeFolder" : "modeBridge")).checked = true;
     $("lang").value = s.lang;
     await refreshFolderStatus();
+    await refreshCloudStatus();
   })();
 })();
