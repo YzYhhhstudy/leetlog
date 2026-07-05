@@ -90,6 +90,9 @@ const NW_UI = {
     cloudRevoked: "🔴 连接已失效（token 被吊销），请重新配对",
     cloudBadCode: "配对失败：配对码无效或已过期",
     cloudPending: (n) => `☁️ 云端待补发 ${n} 条`,
+    dueTitle: (n) => `🔁 今天该复习 <b>${n}</b> 题`,
+    dueNone: "🎉 今天没有到期的复习题",
+    dueMore: (n) => `…还有 ${n} 题`,
   },
   en: {
     settings: "⚙️ Settings",
@@ -138,6 +141,9 @@ const NW_UI = {
     cloudRevoked: "🔴 Connection expired (token revoked) — pair again",
     cloudBadCode: "Pairing failed: invalid or expired code",
     cloudPending: (n) => `☁️ ${n} events pending for cloud`,
+    dueTitle: (n) => `🔁 <b>${n}</b> problem(s) due for review today`,
+    dueNone: "🎉 Nothing due for review today",
+    dueMore: (n) => `…and ${n} more`,
   },
 };
 

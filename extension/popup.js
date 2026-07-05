@@ -57,10 +57,31 @@
       });
   }
 
+  // 云端已连接时：popup 直接显示"今天该复习哪题"（设备 token 鉴权）
+  function showDueReviews(s, U) {
+    if (!(s.cloud && s.cloud.enabled && s.cloud.url && s.cloud.token)) return;
+    fetch(`${s.cloud.url.replace(/\/$/, "")}/v1/device/reviews/due`, {
+      headers: { Authorization: `Bearer ${s.cloud.token}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        if (d.count === 0) { $("due").innerHTML = `<span class="ok">${U.dueNone}</span>`; return; }
+        const top = d.due.slice(0, 5).map((it) => {
+          const url = `https://leetcode.${it.site === "cn" ? "cn" : "com"}/problems/${it.slug}/`;
+          return `· <a href="${url}" target="_blank">${it.title}</a>`;
+        });
+        if (d.count > 5) top.push(U.dueMore(d.count - 5));
+        $("due").innerHTML = `${U.dueTitle(d.count)}<br>${top.join("<br>")}`;
+      })
+      .catch(() => {});
+  }
+
   nwGetSettings().then((s) => {
     const U = NW_UI[s.lang] || NW_UI.zh;
     $("openOptions").textContent = U.settings;
     $("status").textContent = U.checking;
+    showDueReviews(s, U);
     chrome.storage.local.get(["leetlog_queue", "leetlog_cloud_queue"]).then((o) => {
       const n = (o.leetlog_queue || []).length;
       const cn = (o.leetlog_cloud_queue || []).length;
