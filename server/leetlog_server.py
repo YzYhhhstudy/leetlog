@@ -51,7 +51,8 @@ STRINGS = {
         "runs": lambda r: f"· 运行 {r} 次",
         "stay": "· 本题停留 {m} 分钟",
         "stmt": "题面",
-        "code_header": "✅ 通过代码 · {lang} · {t}",
+        "code_header": "### ✅ 通过代码 · {lang} · {t}",
+        "code_fold": "代码",
         "sections": "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
         "link": "题目链接",
         "log_new": "🆕 {id}. {title} — 建立笔记",
@@ -70,7 +71,8 @@ STRINGS = {
         "runs": lambda r: f"· {r} run{'s' if r != 1 else ''}",
         "stay": "· {m} min on problem",
         "stmt": "Problem",
-        "code_header": "✅ Accepted · {lang} · {t}",
+        "code_header": "### ✅ Accepted · {lang} · {t}",
+        "code_fold": "Code",
         "sections": "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
         "link": "Problem link",
         "log_new": "🆕 {id}. {title} — note created",
@@ -271,15 +273,17 @@ def rewrite_timer_line(text, sess, S):
     return text
 
 
-STMT_MARK = "<!--leetlog:statement-->"
+LEGACY_STMT_MARK = "<!--leetlog:statement-->"
 
 
 def insert_statement(text, md, S):
-    """把题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）"""
-    if STMT_MARK in text:
+    """把题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
+       幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记"""
+    text = text.replace(LEGACY_STMT_MARK + "\n", "")  # 清理旧版写入的 HTML 注释（实时预览模式会显示出来）
+    if "[!abstract]-" in text:
         return text
     quoted = "\n".join(("> " + l).rstrip() for l in md.strip().split("\n"))
-    block = f"\n{STMT_MARK}\n> [!abstract]- {S['stmt']}\n{quoted}\n"
+    block = f"\n> [!abstract]- {S['stmt']}\n{quoted}\n"
     i = text.find("\n## ")
     if i == -1:
         return text + block
@@ -295,7 +299,7 @@ def insert_code_block(text, sess, ev, S):
     header = S["code_header"].format(lang=lang or '?', t=f"{now:%H:%M}") + (f"（{perf}）" if S is STRINGS["zh"] and perf else (f" ({perf})" if perf else ""))
     fenced = [f"```{md_lang}", *(ev.get('code') or '').rstrip().split("\n"), "```"]
     inner = "\n".join(("> " + l).rstrip() for l in fenced)
-    block = f"\n> [!success]- {header}\n{inner}\n"
+    block = f"\n{header}\n> [!success]- {S['code_fold']}\n{inner}\n"
     idx = text.rfind("⏱")
     line_end = text.find("\n", idx)
     if idx == -1 or line_end == -1:

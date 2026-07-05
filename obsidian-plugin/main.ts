@@ -95,7 +95,8 @@ const STRINGS = {
     stay: (m: number) => `· 本题停留 ${m} 分钟`,
     stmt: "题面",
     codeHeader: (lang: string, t: string, perf: string) =>
-      `✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
+      `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
+    codeFold: "代码",
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
     link: "题目链接",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — 建立笔记`,
@@ -115,7 +116,8 @@ const STRINGS = {
     stay: (m: number) => `· ${m} min on problem`,
     stmt: "Problem",
     codeHeader: (lang: string, t: string, perf: string) =>
-      `✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
+      `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
+    codeFold: "Code",
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
     link: "Problem link",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — note created`,
@@ -320,12 +322,13 @@ export default class LeetLogBridge extends Plugin {
     return lines.join("\n");
   }
 
-  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）
+  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
+  // 幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记
   insertStatement(text: string, md: string): string {
-    const MARK = "<!--leetlog:statement-->";
-    if (text.includes(MARK)) return text;
+    text = text.replace("<!--leetlog:statement-->\n", ""); // 清理旧版写入的 HTML 注释（实时预览会显示）
+    if (text.includes("[!abstract]-")) return text;
     const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
-    const block = `\n${MARK}\n> [!abstract]- ${this.S.stmt}\n${quoted}\n`;
+    const block = `\n> [!abstract]- ${this.S.stmt}\n${quoted}\n`;
     const i = text.indexOf("\n## ");
     if (i === -1) return text + block;
     return text.slice(0, i) + block + text.slice(i);
@@ -339,7 +342,7 @@ export default class LeetLogBridge extends Plugin {
     const header = this.S.codeHeader(lang || "?", hm(ts), perf);
     const fenced = ["```" + mdLang, ...(ev.code ?? "").trimEnd().split("\n"), "```"];
     const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
-    const block = `\n> [!success]- ${header}\n${inner}\n`;
+    const block = `\n${header}\n> [!success]- ${this.S.codeFold}\n${inner}\n`;
     const idx = text.lastIndexOf("⏱");
     const lineEnd = text.indexOf("\n", idx);
     if (idx === -1 || lineEnd === -1) return text + block;

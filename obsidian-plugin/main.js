@@ -42,7 +42,8 @@ var STRINGS = {
     runs: (r) => `\xB7 \u8FD0\u884C ${r} \u6B21`,
     stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
     stmt: "\u9898\u9762",
-    codeHeader: (lang, t, perf) => `\u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
+    codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
+    codeFold: "\u4EE3\u7801",
     sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
     link: "\u9898\u76EE\u94FE\u63A5",
     nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 \u5EFA\u7ACB\u7B14\u8BB0`,
@@ -60,7 +61,8 @@ var STRINGS = {
     runs: (r) => `\xB7 ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m) => `\xB7 ${m} min on problem`,
     stmt: "Problem",
-    codeHeader: (lang, t, perf) => `\u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
+    codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
+    codeFold: "Code",
     sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
     link: "Problem link",
     nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 note created`,
@@ -264,13 +266,13 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     }
     return lines.join("\n");
   }
-  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）
+  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
+  // 幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记
   insertStatement(text, md) {
-    const MARK = "<!--leetlog:statement-->";
-    if (text.includes(MARK)) return text;
+    text = text.replace("<!--leetlog:statement-->\n", "");
+    if (text.includes("[!abstract]-")) return text;
     const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
     const block = `
-${MARK}
 > [!abstract]- ${this.S.stmt}
 ${quoted}
 `;
@@ -287,7 +289,8 @@ ${quoted}
     const fenced = ["```" + mdLang, ...(ev.code ?? "").trimEnd().split("\n"), "```"];
     const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
     const block = `
-> [!success]- ${header}
+${header}
+> [!success]- ${this.S.codeFold}
 ${inner}
 `;
     const idx = text.lastIndexOf("\u23F1");
