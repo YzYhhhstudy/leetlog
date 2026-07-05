@@ -93,6 +93,8 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
     `Buffer practice events on the user's device when the localhost bridge is offline, so no practice session is lost. Nothing leaves the device.`
   - `alarms`（0.3.0 起新增，离线队列重试） →
     `Periodically (every 30s) retry delivering buffered events to the user's own localhost bridge until it comes back online.`
+  - `scripting` + `host_permissions: *://leetcode.com/problems/* 与 *://leetcode.cn/problems/*`（0.4.1 起新增，更新自愈） →
+    `After an extension update, re-inject the capture content scripts into already-open LeetCode problem tabs so long-lived tabs keep logging without a manual page refresh. Same origins as the declared content scripts; no new data access.`
 - **数据使用（Data usage）**：勾选两项——
   **"User activity"**（对应：打字开始信号 + 拦截自己的 submit/判题网络请求）与
   **"Website content"**（对应：题目标题/难度/标签/链接、用户提交的代码文本、判题结果）

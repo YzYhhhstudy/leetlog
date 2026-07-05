@@ -3,7 +3,11 @@
 // 由它 POST 给本地桥接；桥接不在线时自动进离线队列，恢复后按原时间戳补录。
 (() => {
   "use strict";
+  // 防重复注入（onInstalled 的补注入与 manifest 注入可能先后到达同一隔离世界）
+  if (globalThis.__leetlogContentLoaded) return;
+  globalThis.__leetlogContentLoaded = true;
   let warned = false;
+  let orphanWarned = false;
 
   function relay(d) {
     try {
@@ -19,7 +23,12 @@
         }
       }).catch(() => {});
     } catch (_) {
-      // 扩展刚更新时旧页面的 context 已失效，刷新页面即可
+      // 扩展更新后本页的连接已失效。新版扩展会自动补注入接管；
+      // 若没接管（极旧版本升级上来），大声提示而不是无声丢事件。
+      if (!orphanWarned) {
+        orphanWarned = true;
+        console.warn("[LeetLog] ⚠️ 扩展已更新，本页连接失效，事件未记录 —— 请刷新页面");
+      }
     }
   }
 

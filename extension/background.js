@@ -77,5 +77,22 @@ chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === ALARM) serialize(() => enqueueAndFlush(null));
 });
 
+// 扩展安装/更新会孤立已打开页面里的 content script（chrome.runtime 失效，事件静默丢失）。
+// 把脚本重新注入所有已打开的题目页，长期开着的标签页无需手动刷新。
+// 两个脚本都有自愈守卫：interceptor 靠页面 window 标记防止重复挂钩，content 靠隔离世界标记防重复监听。
+chrome.runtime.onInstalled.addListener(async () => {
+  const tabs = await chrome.tabs.query({
+    url: ["*://leetcode.com/problems/*", "*://leetcode.cn/problems/*"],
+  });
+  for (const t of tabs) {
+    try {
+      await chrome.scripting.executeScript({ target: { tabId: t.id }, files: ["interceptor.js"], world: "MAIN" });
+      await chrome.scripting.executeScript({ target: { tabId: t.id }, files: ["content.js"] });
+    } catch (_) {
+      // 睡眠/崩溃的标签页注入失败没关系，用户刷新后 manifest 声明的注入会接管
+    }
+  }
+});
+
 // worker 每次被唤醒（含浏览器启动）都校准徽章并尝试清队
 serialize(() => enqueueAndFlush(null));

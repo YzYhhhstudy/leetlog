@@ -1,14 +1,17 @@
 {
   "manifest_version": 3,
   "name": "LeetLog — LeetCode practice logger for Obsidian",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Typing starts the timer, submissions are counted, AC saves your code into local Obsidian notes. 100% local, zero upload.",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "scripting"
   ],
   "host_permissions": [
-    "http://127.0.0.1/*"
+    "http://127.0.0.1/*",
+    "*://leetcode.com/problems/*",
+    "*://leetcode.cn/problems/*"
   ],
   "background": {
     "service_worker": "background.js"

@@ -6,6 +6,9 @@
 // 只通过 window.postMessage 把事件交给 content.js（隔离世界）转发给本地服务。
 (() => {
   "use strict";
+  // 防重复挂钩：扩展更新后 background 会向已打开页面补注入，页面里可能已有本脚本
+  if (window.__leetlogInterceptorLoaded) return;
+  window.__leetlogInterceptorLoaded = true;
 
   const log = (...a) => console.debug("[LeetLog]", ...a);
   const slugOf = () => (location.pathname.match(/\/problems\/([^/?#]+)/) || [])[1] || null;
