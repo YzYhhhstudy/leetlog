@@ -89,6 +89,10 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
     `Send captured practice events to the user's own local bridge application. No external hosts are contacted.`
   - `content_scripts on leetcode.com/leetcode.cn problem pages` →
     `Detect when the user starts typing (timing signal) and read the user's own submissions and judge results in order to log them locally.`
+  - `storage`（0.3.0 起新增，离线队列） →
+    `Buffer practice events on the user's device when the localhost bridge is offline, so no practice session is lost. Nothing leaves the device.`
+  - `alarms`（0.3.0 起新增，离线队列重试） →
+    `Periodically (every 30s) retry delivering buffered events to the user's own localhost bridge until it comes back online.`
 - **数据使用（Data usage）**：勾选两项——
   **"User activity"**（对应：打字开始信号 + 拦截自己的 submit/判题网络请求）与
   **"Website content"**（对应：题目标题/难度/标签/链接、用户提交的代码文本、判题结果）
