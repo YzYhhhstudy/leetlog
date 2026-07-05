@@ -39,7 +39,9 @@ var STRINGS = {
     ac: (t, s, a) => `\u2192 AC ${t} \xB7 \u63D0\u4EA4 ${s} \u6B21 / \u901A\u8FC7 ${a} \u6B21`,
     submitted: (s) => `\xB7 \u5DF2\u63D0\u4EA4 ${s} \u6B21\uFF08\u672A AC\uFF09`,
     inProgress: "\u2192 \uFF08\u8FDB\u884C\u4E2D\uFF09",
+    runs: (r) => `\xB7 \u8FD0\u884C ${r} \u6B21`,
     stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
+    stmt: "\u9898\u9762",
     codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
     sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
     link: "\u9898\u76EE\u94FE\u63A5",
@@ -55,7 +57,9 @@ var STRINGS = {
     ac: (t, s, a) => `\u2192 AC ${t} \xB7 ${s} submit${s > 1 ? "s" : ""} / ${a} AC`,
     submitted: (s) => `\xB7 ${s} submitted (no AC yet)`,
     inProgress: "\u2192 (in progress)",
+    runs: (r) => `\xB7 ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m) => `\xB7 ${m} min on problem`,
+    stmt: "Problem",
     codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
     sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
     link: "Problem link",
@@ -197,7 +201,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
   async handleEvent(ev) {
     const slug = ev.slug;
     const ts = Math.floor(ev.ts ?? Date.now() / 1e3);
-    if (!slug || !["start", "result", "leave"].includes(ev.type)) throw new Error("bad event");
+    if (!slug || !["start", "result", "leave", "run", "statement"].includes(ev.type)) throw new Error("bad event");
     if (ev.type === "leave") {
       await this.closeSession(slug, ts, "\u5173\u95ED/\u79BB\u5F00\u9875\u9762");
       await this.saveData(this.data);
@@ -210,6 +214,13 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     }
     const sess = await this.ensureAttempt(slug, ts);
     let text = await this.readNote(sess.path);
+    if (ev.type === "statement" && ev.md?.trim()) {
+      text = this.insertStatement(text, ev.md.trim());
+    }
+    if (ev.type === "run") {
+      sess.runs = (sess.runs ?? 0) + 1;
+      text = fmSet(text, "total_runs", parseInt(fmGet(text, "total_runs") ?? "0") + 1);
+    }
     if (ev.type === "result") {
       sess.submits += 1;
       if (!sess.first_submit) sess.first_submit = ts;
@@ -237,6 +248,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     if (s.first_ac) parts.push(S.ac(hm(s.first_ac), s.submits, s.acs));
     else if (s.submits) parts.push(S.submitted(s.submits));
     else if (!s.closed) parts.push(S.inProgress);
+    if (s.runs) parts.push(S.runs(s.runs));
     if (s.closed) parts.push(S.stay(mins(s.start, s.last_seen)));
     return parts.join(" ");
   }
@@ -249,6 +261,20 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
       }
     }
     return lines.join("\n");
+  }
+  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）
+  insertStatement(text, md) {
+    const MARK = "<!--leetlog:statement-->";
+    if (text.includes(MARK)) return text;
+    const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
+    const block = `
+${MARK}
+> [!abstract]- ${this.S.stmt}
+${quoted}
+`;
+    const i = text.indexOf("\n## ");
+    if (i === -1) return text + block;
+    return text.slice(0, i) + block + text.slice(i);
   }
   insertCodeBlock(text, ev, ts) {
     const lang = (ev.lang ?? "").trim();
@@ -306,6 +332,7 @@ ${(ev.code ?? "").trimEnd()}
       last_seen: ts,
       submits: 0,
       acs: 0,
+      runs: 0,
       first_submit: null,
       first_ac: null,
       closed: false,
@@ -336,6 +363,7 @@ ${this.S.sections}`;
       `last_attempt: ${ymd(ts)}`,
       "total_submissions: 0",
       "total_ac: 0",
+      "total_runs: 0",
       "---",
       "",
       `# ${p.id}. ${p.title}`,

@@ -114,12 +114,17 @@ first_attempt: 2026-07-03
 last_attempt: 2026-08-10
 total_submissions: 5
 total_ac: 2
+total_runs: 9
 ---
 
 # 13. Roman to Integer
 
+> [!abstract]- Problem
+> Roman numerals are represented by seven different symbols… *(statement auto-captured
+> into a folded callout — read your mistake notebook offline, on the subway)*
+
 ## Attempt 1 · 2026-07-03 Fri
-⏱ start 10:34 → first submit 10:42 · coding 8 min → AC 10:49 · 2 submits / 1 AC · 15 min on problem
+⏱ start 10:34 → first submit 10:42 · coding 8 min → AC 10:49 · 2 submits / 1 AC · 6 runs · 15 min on problem
 
 ### ✅ Accepted · python3 · 10:49 (12 ms · 17.1 MB)
 ```python
@@ -134,6 +139,14 @@ class Solution: ...
 The frontmatter is designed for Obsidian Properties / Dataview — one query gives you a
 "mistake notebook", "problems untouched for 30+ days", or per-tag accuracy.
 
+**Ready-made Dataview templates** — copy [`templates/`](templates/) into your vault
+(requires the Dataview plugin):
+
+- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) — totals, mistake notebook,
+  rusty problems (30+ days), per-tag accuracy
+- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) — spaced-repetition queue
+  (1/3/7/14/30-day intervals stepped by attempt count)
+
 ## Timing semantics
 
 ```
@@ -145,6 +158,8 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 - **Time on problem** = first keystroke → closing the page / switching to another problem
   (includes post-submit review & optimization)
 - Keep optimizing after AC: code blocks append, counters accumulate
+- **Run** (non-submit) executions are counted too — per-attempt in the ⏱ line, cumulative
+  in `total_runs` (debugging intensity is a review signal)
 - Coming back within 6 hours counts as the same attempt; later opens "Attempt N+1"
 - 🌐 Note template language: English or 中文 (Obsidian plugin setting / `lang` in the Python config)
 
@@ -153,15 +168,16 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 - Judge results come through two channels: after capturing the `submission_id`, the extension
   polls `/check/`, falling back to GraphQL `submissionDetails` — no DOM dependency
 - Server restarts don't lose state (`~/.config/leetlog/state.json`)
-- Solving while the bridge is down? Events are dropped (the browser console shows a `[LeetLog]`
-  warning). The sibling CLI project [lc-notes](../lc-notes) can backfill via `lc sync`
+- Solving while the bridge is down? Events are buffered in the extension's offline queue
+  (toolbar badge shows the count) and replayed with their original timestamps once the
+  bridge is back — timing stays accurate, nothing is lost
 
 ## Known limits
 
 - Relies on LeetCode's current submit endpoints (`/submit/` + `/submissions/detail/<id>/check/`);
   far more stable than DOM scraping, but an API overhaul would need an interceptor update
 - Chrome 111+ (content script MAIN world)
-- leetcode.cn URL patterns are included but lightly tested
+- leetcode.cn is fully supported (verified end-to-end); the statement capture prefers the Chinese translation there
 
 ## Roadmap
 
@@ -177,10 +193,10 @@ production LeetCode. Chrome Web Store listing in review.
 
 **Features**
 - [x] Chrome Web Store — submitted, in review · [ ] Firefox port
-- [ ] Capture the problem statement into the note (offline reading)
-- [ ] Dataview index templates (mistake notebook / spaced-repetition reminders)
+- [x] Capture the problem statement into the note as a folded callout (offline reading)
+- [x] Dataview index templates — see [`templates/`](templates/)
+- [x] Count Run (non-submit) executions (`total_runs` + per-attempt ⏱ line)
 - [ ] `lc import`: split legacy hand-written notes into per-problem files
-- [ ] Count Run (non-submit) executions
 
 ## ❤️ Support
 

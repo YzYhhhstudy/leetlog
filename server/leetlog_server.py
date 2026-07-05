@@ -47,7 +47,9 @@ STRINGS = {
         "ac": lambda t, s, a: f"→ AC {t} · 提交 {s} 次 / 通过 {a} 次",
         "submitted": lambda s: f"· 已提交 {s} 次（未 AC）",
         "in_progress": "→ （进行中）",
+        "runs": lambda r: f"· 运行 {r} 次",
         "stay": "· 本题停留 {m} 分钟",
+        "stmt": "题面",
         "code_header": "### ✅ 通过代码 · {lang} · {t}",
         "sections": "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
         "link": "题目链接",
@@ -64,7 +66,9 @@ STRINGS = {
         "ac": lambda t, s, a: f"→ AC {t} · {s} submit{'s' if s != 1 else ''} / {a} AC",
         "submitted": lambda s: f"· {s} submitted (no AC yet)",
         "in_progress": "→ (in progress)",
+        "runs": lambda r: f"· {r} run{'s' if r != 1 else ''}",
         "stay": "· {m} min on problem",
+        "stmt": "Problem",
         "code_header": "### ✅ Accepted · {lang} · {t}",
         "sections": "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
         "link": "Problem link",
@@ -213,6 +217,7 @@ first_attempt: {now:%Y-%m-%d}
 last_attempt: {now:%Y-%m-%d}
 total_submissions: 0
 total_ac: 0
+total_runs: 0
 ---
 
 # {prob['id']}. {prob['title']}
@@ -249,6 +254,8 @@ def timer_line(sess, S):
         parts.append(S["submitted"](sess['submits']))
     elif not sess.get("closed"):
         parts.append(S["in_progress"])
+    if sess.get("runs"):
+        parts.append(S["runs"](sess["runs"]))
     if sess.get("closed"):
         parts.append(S["stay"].format(m=_mins(sess['start'], sess['last_seen'])))
     return " ".join(parts)
@@ -261,6 +268,21 @@ def rewrite_timer_line(text, sess, S):
             lines[i] = timer_line(sess, S)
             return "\n".join(lines)
     return text
+
+
+STMT_MARK = "<!--leetlog:statement-->"
+
+
+def insert_statement(text, md, S):
+    """把题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）"""
+    if STMT_MARK in text:
+        return text
+    quoted = "\n".join(("> " + l).rstrip() for l in md.strip().split("\n"))
+    block = f"\n{STMT_MARK}\n> [!abstract]- {S['stmt']}\n{quoted}\n"
+    i = text.find("\n## ")
+    if i == -1:
+        return text + block
+    return text[:i] + block + text[i:]
 
 
 def insert_code_block(text, sess, ev, S):
@@ -287,6 +309,7 @@ def migrate_session(sess):
     sess.setdefault("closed", False)
     sess.setdefault("submits", 0)
     sess.setdefault("acs", 0)
+    sess.setdefault("runs", 0)
     sess.setdefault("last_seen", sess.get("start", int(time.time())))
     return sess
 
@@ -336,7 +359,7 @@ def ensure_attempt(cfg, state, slug, ts):
         print(S["log_new"].format(id=prob['id'], title=prob['title']))
     text = fm_set(text, "attempts", n)
     text = fm_set(text, "last_attempt", f"{now:%Y-%m-%d}")
-    sess = {"start": ts, "last_seen": ts, "submits": 0, "acs": 0,
+    sess = {"start": ts, "last_seen": ts, "submits": 0, "acs": 0, "runs": 0,
             "first_submit": None, "first_ac": None, "closed": False,
             "path": str(path), "n": n}
     text += ATTEMPT_TMPL.format(attempt=S["attempt"].format(n=n), date=f"{now:%Y-%m-%d}",
@@ -354,7 +377,7 @@ def handle_event(ev):
         slug = ev.get("slug")
         etype = ev.get("type")
         ts = int(ev.get("ts") or time.time())
-        if not slug or etype not in ("start", "result", "leave"):
+        if not slug or etype not in ("start", "result", "leave", "run", "statement"):
             return {"ok": False, "error": "bad event"}
 
         if etype == "leave":
@@ -372,6 +395,15 @@ def handle_event(ev):
         sess = ensure_attempt(cfg, state, slug, ts)
         path = Path(sess["path"])
         text = path.read_text()
+
+        if etype == "statement":
+            md = (ev.get("md") or "").strip()
+            if md:
+                text = insert_statement(text, md, S)
+
+        if etype == "run":
+            sess["runs"] = sess.get("runs", 0) + 1
+            text = fm_set(text, "total_runs", int(fm_get(text, "total_runs") or 0) + 1)
 
         if etype == "result":
             sess["submits"] += 1

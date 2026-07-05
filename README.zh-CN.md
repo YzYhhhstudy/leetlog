@@ -109,12 +109,16 @@ first_attempt: 2026-07-03
 last_attempt: 2026-08-10
 total_submissions: 5
 total_ac: 2
+total_runs: 9
 ---
 
 # 13. Roman to Integer
 
+> [!abstract]- 题面
+> 罗马数字包含以下七种字符…… *（题面自动抓取，默认折叠——地铁上离线翻错题本也能看题）*
+
 ## 第 1 次 · 2026-07-03 周五
-⏱ 开始 10:34 → 首提 10:42 · 编码 8 分钟 → AC 10:49 · 提交 2 次 / 通过 1 次 · 本题停留 15 分钟
+⏱ 开始 10:34 → 首提 10:42 · 编码 8 分钟 → AC 10:49 · 提交 2 次 / 通过 1 次 · 运行 6 次 · 本题停留 15 分钟
 
 ### ✅ 通过代码 · python3 · 10:49（12 ms · 17.1 MB）
 ```python
@@ -129,6 +133,14 @@ class Solution: ...
 frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题本"、
 "超过 30 天没碰的题"、"按标签的正确率"。
 
+**开箱即用的 Dataview 模板** —— 把 [`templates/`](templates/) 复制进 vault 即可
+（需要 Dataview 插件）：
+
+- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) —— 总览、错题本、
+  30 天未碰的题、按标签正确率
+- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) —— 间隔复习队列
+  （按做题次数递进 1/3/7/14/30 天）
+
 ## 计时语义
 
 ```
@@ -139,6 +151,8 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - **编码时间** = 敲下第一个键 → 首次提交（真实的"写题"时长）
 - **本题停留** = 敲下第一个键 → 关闭页面 / 切到另一道题（含提交后复盘、优化的时间）
 - AC 后继续优化再提交：代码块追加、计数继续累积
+- **Run**（不提交的测试运行）也会计数——当次显示在 ⏱ 行，累计写入 `total_runs`
+  （调试强度也是复盘的重要信号）
 - 离开后 6 小时内回来算同一次做题；超过则自动开"第 N+1 次"
 - 🌐 笔记模板语言可选 中文 / English（Obsidian 插件设置里切换，Python 版改 config 的 `lang`）
 
@@ -147,15 +161,15 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - 判题结果通过双通道获取：拦截到 submission_id 后主动轮询 `/check/` 接口，失效自动切换
   GraphQL `submissionDetails` 兜底（不依赖页面 DOM，不受 UI 改版影响）
 - 服务重启不丢状态（会话存在 `~/.config/leetlog/state.json`）
-- 服务没开时做题？事件会丢（浏览器控制台有 `[LeetLog]` 提示）。可用姊妹项目
-  [lc-notes](../lc-notes) 的 `lc sync` 补记
+- 服务没开时做题？事件进扩展的离线队列（图标徽章显示积压数），服务恢复后
+  按原时间戳自动补录——计时不失真，一条不丢
 
 ## 已知边界
 
 - 依赖 LeetCode 当前的提交接口（`/submit/` + `/submissions/detail/<id>/check/`）；
   接口大改需要更新 interceptor（比 DOM 稳定得多）
 - Chrome 111+（content script MAIN world）
-- leetcode.cn 的接口路径相同已包含匹配，但未充分测试
+- leetcode.cn 已完整支持（端到端验证）；题面抓取在 cn 站自动优先中文翻译
 
 ## Roadmap
 
@@ -169,10 +183,10 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 
 **功能向**
 - [x] Chrome Web Store —— 已提交审核中 · [ ] Firefox 移植
-- [ ] 捕获题目描述存入笔记（离线可读）
-- [ ] Dataview 索引页模板（错题本 / 间隔重做提醒）
+- [x] 捕获题目描述存入笔记（默认折叠 callout，离线可读；leetcode.cn 自动取中文题面）
+- [x] Dataview 索引页模板 —— 见 [`templates/`](templates/)
+- [x] Run（不提交的测试运行）次数统计（`total_runs` + 当次 ⏱ 行）
 - [ ] `lc import`：把旧的手写笔记拆分导入
-- [ ] Run（不提交的测试运行）次数统计
 
 ## ❤️ 支持
 

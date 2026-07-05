@@ -29,8 +29,68 @@
       startedSlug = slug;
       emit("start");
       log("start →", slug);
+      captureStatement(slug);
     }
   }, true);
+
+  // ---------- 1.5) 题面抓取 ----------
+  // start 后异步拉取题面（GraphQL，leetcode.cn 优先中文翻译），在页面端转成 Markdown
+  // 发给桥接；桥接把它作为默认折叠的 callout 插入笔记（已有题面则忽略，幂等）
+  const statementFetched = new Set();
+
+  function htmlToMd(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const conv = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) return (node.nodeValue || "").replace(/ /g, " ");
+      if (node.nodeType !== Node.ELEMENT_NODE) return "";
+      const kids = () => Array.from(node.childNodes).map(conv).join("");
+      switch (node.tagName) {
+        case "P": { const t = kids().trim(); return t ? t + "\n\n" : ""; }
+        case "PRE": return "```\n" + (node.textContent || "").replace(/ /g, " ").trim() + "\n```\n\n";
+        case "CODE": return "`" + (node.textContent || "").replace(/ /g, " ") + "`";
+        case "STRONG": case "B": { const t = kids().trim(); return t ? "**" + t + "**" : ""; }
+        case "EM": case "I": { const t = kids().trim(); return t ? "*" + t + "*" : ""; }
+        case "SUP": return "^" + kids();
+        case "SUB": return "~" + kids();
+        case "BR": return "\n";
+        case "IMG": return "![](" + (node.getAttribute("src") || "") + ")";
+        case "UL": case "OL": {
+          let i = 0;
+          const items = Array.from(node.children)
+            .filter((c) => c.tagName === "LI")
+            .map((li) => (node.tagName === "OL" ? `${++i}. ` : "- ") +
+              Array.from(li.childNodes).map(conv).join("").trim().replace(/\n+/g, "\n  "));
+          return items.join("\n") + "\n\n";
+        }
+        default: return kids();
+      }
+    };
+    return conv(doc.body).replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  async function captureStatement(slug) {
+    if (!slug || statementFetched.has(slug)) return;
+    statementFetched.add(slug);
+    try {
+      const r = await origFetch(`${location.origin}/graphql/`, {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          query: "query($s:String!){question(titleSlug:$s){content translatedContent}}",
+          variables: { s: slug },
+        }),
+      });
+      const d = await r.json();
+      const q = d && d.data && d.data.question;
+      const html = (location.hostname.endsWith("leetcode.cn") && q && q.translatedContent) || (q && q.content) || "";
+      if (!html) { log("题面不可用（付费题或未登录）：", slug); return; }
+      const md = htmlToMd(html);
+      if (md) { emit("statement", { md }, slug); log("statement →", slug, `${md.length} chars`); }
+    } catch (e) {
+      statementFetched.delete(slug); // 失败允许下次 start 时重试
+      log("题面抓取失败：", String(e));
+    }
+  }
 
   // ---------- 3) 判题结果轮询 ----------
   const STATUS = {
@@ -119,9 +179,17 @@
     }
   }
 
+  // Run（非提交执行）→ run 事件，只计数不追结果
+  function emitRun(url) {
+    const slug = (String(url).match(/\/problems\/([^/?#]+)\//) || [])[1];
+    emit("run", {}, slug);
+    log("run →", slug || "(当前题)");
+  }
+
   const origFetch = window.fetch;
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (url && url.includes("/interpret_solution")) emitRun(url);
     let meta = null;
     if (url && url.includes("/submit")) {
       let body = init && typeof init.body === "string" ? init.body : null;
@@ -151,6 +219,7 @@
   };
   XMLHttpRequest.prototype.send = function (body) {
     const url = this.__leetlog_url || "";
+    if (url.includes("/interpret_solution")) emitRun(url);
     const meta = (url.includes("/submit") && typeof body === "string") ? submitMetaFrom(url, body) : null;
     if (meta) {
       this.addEventListener("load", () => {
@@ -163,5 +232,5 @@
     return origSend.apply(this, arguments);
   };
 
-  log("interceptor 已加载（v0.2）");
+  log("interceptor 已加载（v0.4）");
 })();

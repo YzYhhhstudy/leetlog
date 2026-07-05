@@ -35,6 +35,7 @@ interface Session {
   last_seen: number;
   submits: number;
   acs: number;
+  runs?: number;   // 旧版本持久化的会话没有该字段
   first_submit: number | null;
   first_ac: number | null;
   closed: boolean;
@@ -54,7 +55,7 @@ interface PersistedData {
 }
 
 interface LeetLogEvent {
-  type: "start" | "result" | "leave";
+  type: "start" | "result" | "leave" | "run" | "statement";
   slug: string;
   ts?: number;
   status?: string;
@@ -62,6 +63,7 @@ interface LeetLogEvent {
   code?: string;
   runtime?: string;
   memory?: string;
+  md?: string;     // statement 事件：扩展端已转好的题面 Markdown
 }
 
 interface ProblemMeta {
@@ -89,7 +91,9 @@ const STRINGS = {
     ac: (t: string, s: number, a: number) => `→ AC ${t} · 提交 ${s} 次 / 通过 ${a} 次`,
     submitted: (s: number) => `· 已提交 ${s} 次（未 AC）`,
     inProgress: "→ （进行中）",
+    runs: (r: number) => `· 运行 ${r} 次`,
     stay: (m: number) => `· 本题停留 ${m} 分钟`,
+    stmt: "题面",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
@@ -107,7 +111,9 @@ const STRINGS = {
     ac: (t: string, s: number, a: number) => `→ AC ${t} · ${s} submit${s > 1 ? "s" : ""} / ${a} AC`,
     submitted: (s: number) => `· ${s} submitted (no AC yet)`,
     inProgress: "→ (in progress)",
+    runs: (r: number) => `· ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m: number) => `· ${m} min on problem`,
+    stmt: "Problem",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
@@ -243,7 +249,7 @@ export default class LeetLogBridge extends Plugin {
   async handleEvent(ev: LeetLogEvent) {
     const slug = ev.slug;
     const ts = Math.floor(ev.ts ?? Date.now() / 1000);
-    if (!slug || !["start", "result", "leave"].includes(ev.type)) throw new Error("bad event");
+    if (!slug || !["start", "result", "leave", "run", "statement"].includes(ev.type)) throw new Error("bad event");
 
     if (ev.type === "leave") {
       await this.closeSession(slug, ts, "关闭/离开页面");
@@ -259,6 +265,15 @@ export default class LeetLogBridge extends Plugin {
 
     const sess = await this.ensureAttempt(slug, ts);
     let text = await this.readNote(sess.path);
+
+    if (ev.type === "statement" && ev.md?.trim()) {
+      text = this.insertStatement(text, ev.md.trim());
+    }
+
+    if (ev.type === "run") {
+      sess.runs = (sess.runs ?? 0) + 1;
+      text = fmSet(text, "total_runs", parseInt(fmGet(text, "total_runs") ?? "0") + 1);
+    }
 
     if (ev.type === "result") {
       sess.submits += 1;
@@ -290,6 +305,7 @@ export default class LeetLogBridge extends Plugin {
     if (s.first_ac) parts.push(S.ac(hm(s.first_ac), s.submits, s.acs));
     else if (s.submits) parts.push(S.submitted(s.submits));
     else if (!s.closed) parts.push(S.inProgress);
+    if (s.runs) parts.push(S.runs(s.runs));
     if (s.closed) parts.push(S.stay(mins(s.start, s.last_seen)));
     return parts.join(" ");
   }
@@ -300,6 +316,17 @@ export default class LeetLogBridge extends Plugin {
       if (lines[i].startsWith("⏱")) { lines[i] = this.timerLine(sess); break; }
     }
     return lines.join("\n");
+  }
+
+  // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前（幂等）
+  insertStatement(text: string, md: string): string {
+    const MARK = "<!--leetlog:statement-->";
+    if (text.includes(MARK)) return text;
+    const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
+    const block = `\n${MARK}\n> [!abstract]- ${this.S.stmt}\n${quoted}\n`;
+    const i = text.indexOf("\n## ");
+    if (i === -1) return text + block;
+    return text.slice(0, i) + block + text.slice(i);
   }
 
   insertCodeBlock(text: string, ev: LeetLogEvent, ts: number): string {
@@ -353,7 +380,7 @@ export default class LeetLogBridge extends Plugin {
     text = fmSet(text, "last_attempt", ymd(ts));
 
     const sess: Session = {
-      start: ts, last_seen: ts, submits: 0, acs: 0,
+      start: ts, last_seen: ts, submits: 0, acs: 0, runs: 0,
       first_submit: null, first_ac: null, closed: false, path, n,
     };
     const d = new Date(ts * 1000);
@@ -376,6 +403,7 @@ export default class LeetLogBridge extends Plugin {
       `last_attempt: ${ymd(ts)}`,
       "total_submissions: 0",
       "total_ac: 0",
+      "total_runs: 0",
       "---",
       "",
       `# ${p.id}. ${p.title}`,
