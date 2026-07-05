@@ -28,7 +28,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-VERSION = "0.5.2"
+VERSION = "0.5.3"
 PORT = int(os.environ.get("LEETLOG_PORT", "8763"))
 CONFIG_DIR = Path(os.environ.get("LEETLOG_CONFIG", str(Path.home() / ".config" / "leetlog")))
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -51,6 +51,7 @@ STRINGS = {
         "runs": lambda r: f"· 运行 {r} 次",
         "stay": "· 本题停留 {m} 分钟",
         "stmt": "题面",
+        "videos": "讲解视频",
         "code_header": "### ✅ 通过代码 · {lang} · {t}",
         "code_fold": "代码",
         "sections": "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
@@ -71,6 +72,7 @@ STRINGS = {
         "runs": lambda r: f"· {r} run{'s' if r != 1 else ''}",
         "stay": "· {m} min on problem",
         "stmt": "Problem",
+        "videos": "Video solutions",
         "code_header": "### ✅ Accepted · {lang} · {t}",
         "code_fold": "Code",
         "sections": "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
@@ -276,14 +278,47 @@ def rewrite_timer_line(text, sess, S):
 LEGACY_STMT_MARK = "<!--leetlog:statement-->"
 
 
-def insert_statement(text, md, S):
-    """把题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
+def video_links_line(text, site, S):
+    """讲解视频搜索链接（放折叠 callout 之外，保证可见）。cn 题加 Bilibili。"""
+    from urllib.parse import quote_plus
+    m = re.search(r"^# (.+)$", text, re.M)
+    title = m.group(1).strip() if m else ""
+    q = quote_plus(f"leetcode {title}".strip())
+    links = [f"[YouTube](https://www.youtube.com/results?search_query={q})"]
+    if site == "cn":
+        links.append(f"[Bilibili](https://search.bilibili.com/all?keyword={q})")
+    return f"{S['videos']}: {' · '.join(links)}"
+
+
+def _statement_block_end(text):
+    """返回题面 callout 块结束处的偏移（块后第一个非引用行行首）。"""
+    i = text.find("[!abstract]-")
+    if i == -1:
+        return -1
+    pos = text.find("\n", i)
+    while pos != -1:
+        nxt = text.find("\n", pos + 1)
+        line = text[pos + 1:nxt if nxt != -1 else len(text)]
+        if not line.startswith(">"):
+            return pos + 1
+        pos = nxt
+    return len(text)
+
+
+def insert_statement(text, md, S, site="com"):
+    """把题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前，
+       callout 下方跟一行可见的讲解视频链接。
        幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记"""
     text = text.replace(LEGACY_STMT_MARK + "\n", "")  # 清理旧版写入的 HTML 注释（实时预览模式会显示出来）
     if "[!abstract]-" in text:
+        # 旧笔记回填：有题面但还没有视频链接行
+        if "youtube.com/results" not in text:
+            end = _statement_block_end(text)
+            if end != -1:
+                return text[:end] + "\n" + video_links_line(text, site, S) + "\n" + text[end:]
         return text
     quoted = "\n".join(("> " + l).rstrip() for l in md.strip().split("\n"))
-    block = f"\n> [!abstract]- {S['stmt']}\n{quoted}\n"
+    block = f"\n> [!abstract]- {S['stmt']}\n{quoted}\n\n{video_links_line(text, site, S)}\n"
     i = text.find("\n## ")
     if i == -1:
         return text + block
@@ -410,7 +445,7 @@ def handle_event(ev):
         if etype == "statement":
             md = (ev.get("md") or "").strip()
             if md:
-                text = insert_statement(text, md, S)
+                text = insert_statement(text, md, S, ev.get("site", "com"))
 
         if etype == "run":
             sess["runs"] = sess.get("runs", 0) + 1

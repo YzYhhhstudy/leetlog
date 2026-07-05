@@ -64,6 +64,7 @@ interface LeetLogEvent {
   runtime?: string;
   memory?: string;
   md?: string;     // statement 事件：扩展端已转好的题面 Markdown
+  site?: string;   // "com" | "cn"
 }
 
 interface ProblemMeta {
@@ -94,6 +95,7 @@ const STRINGS = {
     runs: (r: number) => `· 运行 ${r} 次`,
     stay: (m: number) => `· 本题停留 ${m} 分钟`,
     stmt: "题面",
+    videos: "讲解视频",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
     codeFold: "代码",
@@ -115,6 +117,7 @@ const STRINGS = {
     runs: (r: number) => `· ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m: number) => `· ${m} min on problem`,
     stmt: "Problem",
+    videos: "Video solutions",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
     codeFold: "Code",
@@ -271,7 +274,7 @@ export default class LeetLogBridge extends Plugin {
     let text = await this.readNote(sess.path);
 
     if (ev.type === "statement" && ev.md?.trim()) {
-      text = this.insertStatement(text, ev.md.trim());
+      text = this.insertStatement(text, ev.md.trim(), ev.site || "com");
     }
 
     if (ev.type === "run") {
@@ -324,11 +327,41 @@ export default class LeetLogBridge extends Plugin {
 
   // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
   // 幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记
-  insertStatement(text: string, md: string): string {
+  // 讲解视频搜索链接（放折叠 callout 之外保证可见；cn 题加 Bilibili）
+  videoLine(text: string, site: string): string {
+    const m = text.match(/^# (.+)$/m);
+    const q = encodeURIComponent(`leetcode ${m ? m[1].trim() : ""}`.trim());
+    const links = [`[YouTube](https://www.youtube.com/results?search_query=${q})`];
+    if (site === "cn") links.push(`[Bilibili](https://search.bilibili.com/all?keyword=${q})`);
+    return `${this.S.videos}: ${links.join(" · ")}`;
+  }
+
+  // 题面 callout 块结束处（块后第一个非引用行行首）
+  statementBlockEnd(text: string): number {
+    const i = text.indexOf("[!abstract]-");
+    if (i === -1) return -1;
+    let pos = text.indexOf("\n", i);
+    while (pos !== -1) {
+      const nxt = text.indexOf("\n", pos + 1);
+      const line = text.slice(pos + 1, nxt === -1 ? text.length : nxt);
+      if (!line.startsWith(">")) return pos + 1;
+      pos = nxt;
+    }
+    return text.length;
+  }
+
+  insertStatement(text: string, md: string, site: string): string {
     text = text.replace("<!--leetlog:statement-->\n", ""); // 清理旧版写入的 HTML 注释（实时预览会显示）
-    if (text.includes("[!abstract]-")) return text;
+    if (text.includes("[!abstract]-")) {
+      // 旧笔记回填：有题面但还没有视频链接行
+      if (!text.includes("youtube.com/results")) {
+        const end = this.statementBlockEnd(text);
+        if (end !== -1) return text.slice(0, end) + "\n" + this.videoLine(text, site) + "\n" + text.slice(end);
+      }
+      return text;
+    }
     const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
-    const block = `\n> [!abstract]- ${this.S.stmt}\n${quoted}\n`;
+    const block = `\n> [!abstract]- ${this.S.stmt}\n${quoted}\n\n${this.videoLine(text, site)}\n`;
     const i = text.indexOf("\n## ");
     if (i === -1) return text + block;
     return text.slice(0, i) + block + text.slice(i);

@@ -42,6 +42,7 @@ var STRINGS = {
     runs: (r) => `\xB7 \u8FD0\u884C ${r} \u6B21`,
     stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
     stmt: "\u9898\u9762",
+    videos: "\u8BB2\u89E3\u89C6\u9891",
     codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
     codeFold: "\u4EE3\u7801",
     sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
@@ -61,6 +62,7 @@ var STRINGS = {
     runs: (r) => `\xB7 ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m) => `\xB7 ${m} min on problem`,
     stmt: "Problem",
+    videos: "Video solutions",
     codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
     codeFold: "Code",
     sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
@@ -219,7 +221,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     const sess = await this.ensureAttempt(slug, ts);
     let text = await this.readNote(sess.path);
     if (ev.type === "statement" && ev.md?.trim()) {
-      text = this.insertStatement(text, ev.md.trim());
+      text = this.insertStatement(text, ev.md.trim(), ev.site || "com");
     }
     if (ev.type === "run") {
       sess.runs = (sess.runs ?? 0) + 1;
@@ -268,13 +270,42 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
   }
   // 题面作为默认折叠的 callout 插到题头之后、第一段做题记录之前。
   // 幂等判断用题面 callout 本身（[!abstract]-），不写额外标记进笔记
-  insertStatement(text, md) {
+  // 讲解视频搜索链接（放折叠 callout 之外保证可见；cn 题加 Bilibili）
+  videoLine(text, site) {
+    const m = text.match(/^# (.+)$/m);
+    const q = encodeURIComponent(`leetcode ${m ? m[1].trim() : ""}`.trim());
+    const links = [`[YouTube](https://www.youtube.com/results?search_query=${q})`];
+    if (site === "cn") links.push(`[Bilibili](https://search.bilibili.com/all?keyword=${q})`);
+    return `${this.S.videos}: ${links.join(" \xB7 ")}`;
+  }
+  // 题面 callout 块结束处（块后第一个非引用行行首）
+  statementBlockEnd(text) {
+    const i = text.indexOf("[!abstract]-");
+    if (i === -1) return -1;
+    let pos = text.indexOf("\n", i);
+    while (pos !== -1) {
+      const nxt = text.indexOf("\n", pos + 1);
+      const line = text.slice(pos + 1, nxt === -1 ? text.length : nxt);
+      if (!line.startsWith(">")) return pos + 1;
+      pos = nxt;
+    }
+    return text.length;
+  }
+  insertStatement(text, md, site) {
     text = text.replace("<!--leetlog:statement-->\n", "");
-    if (text.includes("[!abstract]-")) return text;
+    if (text.includes("[!abstract]-")) {
+      if (!text.includes("youtube.com/results")) {
+        const end = this.statementBlockEnd(text);
+        if (end !== -1) return text.slice(0, end) + "\n" + this.videoLine(text, site) + "\n" + text.slice(end);
+      }
+      return text;
+    }
     const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
     const block = `
 > [!abstract]- ${this.S.stmt}
 ${quoted}
+
+${this.videoLine(text, site)}
 `;
     const i = text.indexOf("\n## ");
     if (i === -1) return text + block;

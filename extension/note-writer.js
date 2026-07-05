@@ -20,6 +20,7 @@ const NW_STRINGS = {
     codeHeader: (lang, t, perf) => `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
     codeFold: "代码",
     stmt: "题面",
+    videos: "讲解视频",
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
     link: "题目链接",
   },
@@ -36,6 +37,7 @@ const NW_STRINGS = {
     codeHeader: (lang, t, perf) => `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
     codeFold: "Code",
     stmt: "Problem",
+    videos: "Video solutions",
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
     link: "Problem link",
   },
@@ -274,10 +276,40 @@ function nwRewriteTimerLine(text, sess, S) {
   return lines.join("\n");
 }
 
-function nwInsertStatement(text, md, S) {
-  if (text.includes("[!abstract]-")) return text;
+// 讲解视频搜索链接（放折叠 callout 之外保证可见；cn 题加 Bilibili）
+function nwVideoLine(text, site, S) {
+  const m = text.match(/^# (.+)$/m);
+  const q = encodeURIComponent(`leetcode ${m ? m[1].trim() : ""}`.trim());
+  const links = [`[YouTube](https://www.youtube.com/results?search_query=${q})`];
+  if (site === "cn") links.push(`[Bilibili](https://search.bilibili.com/all?keyword=${q})`);
+  return `${S.videos}: ${links.join(" · ")}`;
+}
+
+// 题面 callout 块结束处（块后第一个非引用行行首）
+function nwStatementBlockEnd(text) {
+  const i = text.indexOf("[!abstract]-");
+  if (i === -1) return -1;
+  let pos = text.indexOf("\n", i);
+  while (pos !== -1) {
+    const nxt = text.indexOf("\n", pos + 1);
+    const line = text.slice(pos + 1, nxt === -1 ? text.length : nxt);
+    if (!line.startsWith(">")) return pos + 1;
+    pos = nxt;
+  }
+  return text.length;
+}
+
+function nwInsertStatement(text, md, S, site) {
+  if (text.includes("[!abstract]-")) {
+    // 旧笔记回填：有题面但还没有视频链接行
+    if (!text.includes("youtube.com/results")) {
+      const end = nwStatementBlockEnd(text);
+      if (end !== -1) return text.slice(0, end) + "\n" + nwVideoLine(text, site, S) + "\n" + text.slice(end);
+    }
+    return text;
+  }
   const quoted = md.split("\n").map((l) => ("> " + l).trimEnd()).join("\n");
-  const block = `\n> [!abstract]- ${S.stmt}\n${quoted}\n`;
+  const block = `\n> [!abstract]- ${S.stmt}\n${quoted}\n\n${nwVideoLine(text, site, S)}\n`;
   const i = text.indexOf("\n## ");
   if (i === -1) return text + block;
   return text.slice(0, i) + block + text.slice(i);
@@ -430,7 +462,7 @@ async function nwHandleEvent(ev, lang) {
   if (text === null) { await nwSaveSessions(sessions); return; }
 
   if (ev.type === "statement" && ev.md && ev.md.trim()) {
-    text = nwInsertStatement(text, ev.md.trim(), S);
+    text = nwInsertStatement(text, ev.md.trim(), S, ev.site || "com");
   }
 
   if (ev.type === "run") {
