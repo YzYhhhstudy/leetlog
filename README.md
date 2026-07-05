@@ -67,6 +67,13 @@ Auto-updates through Obsidian.
 python3 server/leetlog_server.py
 ```
 
+**Option C — no bridge at all (extension-only)**
+
+In the extension's **⚙️ Options** page, switch to **folder mode** and pick any folder
+(your Obsidian vault's `LeetCode/` subfolder works great) — the extension writes the
+Markdown notes directly via the browser's File System Access permission. Same notes,
+same privacy (nothing leaves your machine), zero extra software.
+
 Zero dependencies (Python stdlib). First run auto-detects your Obsidian vault and writes
 `~/.config/leetlog/config.json` (edit vault path / note folder there).
 
@@ -189,8 +196,8 @@ plugin** (live in the community marketplace) and the Python server. Verified end
 production LeetCode. Chrome Web Store listing in review.
 
 **Next**
-- [ ] **Extension-only mode**: File System Access API — pick your vault folder
-      once, the extension writes Markdown directly, Obsidian not even required
+- [x] **Extension-only mode**: pick a folder once in the Options page, the extension
+      writes Markdown directly via the File System Access API — no bridge, no Obsidian required
 - [x] Offline queue in the extension: buffer events in `chrome.storage` when the bridge is
       down, replay on reconnect (original timestamps preserved) — never lose a session
 

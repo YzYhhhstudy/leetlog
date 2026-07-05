@@ -30,16 +30,27 @@
       (document.activeElement && document.activeElement.closest && document.activeElement.closest(".monaco-editor"));
     if (inEditor) {
       startedSlug = slug;
-      emit("start");
+      const pre = prefetchProblem(slug);
+      // 元数据先于 start 发出（extension-only 模式靠它命名/填充笔记），题面随后
+      if (pre.value) {
+        if (pre.value.meta) emit("meta", pre.value.meta, slug);
+        emit("start");
+        if (pre.value.md) emit("statement", { md: pre.value.md }, slug);
+      } else {
+        emit("start");
+        pre.p.then((v) => {
+          if (!v) return;
+          if (v.meta) emit("meta", v.meta, slug);
+          if (v.md) emit("statement", { md: v.md }, slug);
+        });
+      }
       log("start →", slug);
-      captureStatement(slug);
     }
   }, true);
 
-  // ---------- 1.5) 题面抓取 ----------
-  // start 后异步拉取题面（GraphQL，leetcode.cn 优先中文翻译），在页面端转成 Markdown
-  // 发给桥接；桥接把它作为默认折叠的 callout 插入笔记（已有题面则忽略，幂等）
-  const statementFetched = new Set();
+  // ---------- 1.5) 题目预取（元数据 + 题面） ----------
+  // 页面加载时就发一次 GraphQL（leetcode.cn 题面优先中文翻译），首次击键时直接从缓存发事件。
+  // meta 供 extension-only 模式命名笔记；statement 由桥接作为默认折叠 callout 插入（幂等）。
 
   function htmlToMd(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -71,28 +82,42 @@
     return conv(doc.body).replace(/\n{3,}/g, "\n\n").trim();
   }
 
-  async function captureStatement(slug) {
-    if (!slug || statementFetched.has(slug)) return;
-    statementFetched.add(slug);
-    try {
+  const prefetched = {}; // slug -> { p: Promise, value?: {meta, md} }
+
+  function prefetchProblem(slug) {
+    if (!slug) return { p: Promise.resolve(null) };
+    if (prefetched[slug]) return prefetched[slug];
+    const entry = {};
+    entry.p = (async () => {
       const r = await origFetch(`${location.origin}/graphql/`, {
         method: "POST", credentials: "same-origin",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          query: "query($s:String!){question(titleSlug:$s){content translatedContent}}",
+          query: "query($s:String!){question(titleSlug:$s){questionFrontendId title difficulty topicTags{name} content translatedContent}}",
           variables: { s: slug },
         }),
       });
       const d = await r.json();
       const q = d && d.data && d.data.question;
+      const meta = q ? {
+        id: parseInt(q.questionFrontendId, 10) || 0,
+        title: q.title || slug,
+        difficulty: q.difficulty || "?",
+        tags: (q.topicTags || []).map((t) => t.name),
+        url: `${location.origin}/problems/${slug}/description/`,
+      } : null;
       const html = (location.hostname.endsWith("leetcode.cn") && q && q.translatedContent) || (q && q.content) || "";
-      if (!html) { log("题面不可用（付费题或未登录）：", slug); return; }
-      const md = htmlToMd(html);
-      if (md) { emit("statement", { md }, slug); log("statement →", slug, `${md.length} chars`); }
-    } catch (e) {
-      statementFetched.delete(slug); // 失败允许下次 start 时重试
-      log("题面抓取失败：", String(e));
-    }
+      const md = html ? htmlToMd(html) : ""; // 付费题/未登录拿不到题面，只发 meta
+      entry.value = { meta, md };
+      log("预取完成：", slug, meta ? `#${meta.id}` : "(无元数据)", md ? `${md.length} chars` : "(无题面)");
+      return entry.value;
+    })().catch((e) => {
+      delete prefetched[slug]; // 失败允许重试
+      log("题目预取失败：", String(e));
+      return null;
+    });
+    prefetched[slug] = entry;
+    return entry;
   }
 
   // ---------- 3) 判题结果轮询 ----------
@@ -235,5 +260,9 @@
     return origSend.apply(this, arguments);
   };
 
-  log("interceptor 已加载（v0.4）");
+  // 页面加载即预取当前题（fetch 钩子已装好，走 origFetch）
+  const initialSlug = slugOf();
+  if (initialSlug) prefetchProblem(initialSlug);
+
+  log("interceptor 已加载（v0.5）");
 })();

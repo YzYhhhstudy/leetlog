@@ -63,6 +63,12 @@ Obsidian 里：**设置 → 第三方插件 → 浏览** → 搜索 **"LeetLog B
 python3 server/leetlog_server.py
 ```
 
+**方案 C —— 什么桥接都不装（纯扩展模式）**
+
+在扩展的 **⚙️ 设置页**切换到**直写文件夹模式**，选一个文件夹（选 Obsidian vault 里的
+`LeetCode/` 子文件夹效果最佳）——扩展通过浏览器的 File System Access 授权直接写 Markdown
+笔记。同样的笔记、同样的隐私（数据不离开本机），零额外软件。
+
 零依赖（Python 标准库）。首次运行自动探测你的 Obsidian vault 并生成配置
 `~/.config/leetlog/config.json`（可改 vault 路径和笔记文件夹）。
 
@@ -180,8 +186,8 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 和 Python 服务；已在真实 LeetCode 环境端到端验证；Chrome Web Store 审核中。
 
 **接下来**
-- [ ] **纯扩展模式**：File System Access API 让用户选一次 vault 文件夹，扩展直接写
-      Markdown，连 Obsidian 都不用装（适合非 Obsidian 用户）
+- [x] **纯扩展模式**：设置页里选一次文件夹，扩展经 File System Access API 直接写
+      Markdown——不装桥接、不装 Obsidian 也能用
 - [x] 扩展侧离线队列：桥接不在线时把事件存 `chrome.storage`，恢复后按原时间戳补发，永不丢事件
 
 **功能向**
