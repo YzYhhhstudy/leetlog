@@ -110,6 +110,7 @@
       } : null;
       const html = (location.hostname.endsWith("leetcode.cn") && q && q.translatedContent) || (q && q.content) || "";
       const md = html ? htmlToMd(html) : ""; // 付费题/未登录拿不到题面，只发 meta
+      if (meta && md) meta.gist = md.replace(/\s+/g, " ").slice(0, 200); // 闪卡正面的精简题面（用户内容）
       entry.value = { meta, md };
       log("预取完成：", slug, meta ? `#${meta.id}` : "(无元数据)", md ? `${md.length} chars` : "(无题面)");
       return entry.value;
