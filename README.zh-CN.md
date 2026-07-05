@@ -2,6 +2,12 @@
 
 # 📗 LeetLog
 
+[![Release](https://img.shields.io/github/v/release/YzYhhhstudy/leetlog?label=release&color=2ea44f)](https://github.com/YzYhhhstudy/leetlog/releases)
+[![Obsidian plugin](https://img.shields.io/badge/Obsidian-LeetLog%20Bridge-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/plugins?id=leetlog-bridge)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-in%20review-f4b400?logo=googlechrome&logoColor=white)](https://github.com/YzYhhhstudy/leetlog/releases)
+[![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/YzYhhhstudy)
+
 **把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你只负责写感悟。**
 
 ![demo](docs/demo.svg)
@@ -38,9 +44,20 @@ content.js ──POST──▶ 本地桥接服务 127.0.0.1:8763（leetlog_serve
 GraphQL `submissionDetails` 兜底。**所有数据只在 `leetcode.com 页面 → 127.0.0.1 → 本地文件`
 之间流动，无任何外部上传。**
 
-## 安装（两步）
+## 安装（约 2 分钟）
 
-### 1. 启动本地桥接服务
+LeetLog 由两部分组成：**浏览器扩展**（负责捕获）+ 本机的**桥接**（负责写笔记）。
+桥接**二选一**即可——两者共用 8763 端口，别同时开。
+
+### 1. 装一个桥接（二选一）
+
+**方案 A —— Obsidian 插件（推荐，零终端）**
+
+Obsidian 里：**设置 → 第三方插件 → 浏览** → 搜索 **"LeetLog Bridge"** → 安装 → 启用
+（或直接打开 [obsidian.md/plugins?id=leetlog-bridge](https://obsidian.md/plugins?id=leetlog-bridge)）。
+端口、笔记文件夹、笔记模板语言（中文 / English）都在插件设置里，随 Obsidian 自动更新。
+
+**方案 B —— Python 服务（不用 Obsidian 也能跑）**
 
 ```bash
 python3 server/leetlog_server.py
@@ -71,6 +88,8 @@ launchctl load ~/Library/LaunchAgents/com.leetlog.server.plist
 </details>
 
 ### 2. 装浏览器扩展
+
+**Chrome Web Store 正在审核中**——过审后这里会换成一键安装链接。目前先手动加载：
 
 Chrome / Edge / Arc：`chrome://extensions` → 打开右上角"开发者模式" →
 "加载已解压的扩展程序" → 选 `extension/` 文件夹。
@@ -140,18 +159,16 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 
 ## Roadmap
 
-**v1.0（当前）**：扩展 + Python 桥接服务，已在真实 LeetCode 环境端到端验证
+**v0.2（当前）**：扩展 + 两种可互换的桥接——**LeetLog Bridge Obsidian 插件**（已上线社区市场）
+和 Python 服务；已在真实 LeetCode 环境端到端验证；Chrome Web Store 审核中。
 
-**v2.0 —— 去掉"手动开服务"（两条路线）**
-- [ ] **Obsidian 插件版桥接（主推）**：把桥接服务用 TypeScript 移植成 Obsidian 社区插件
-      （Obsidian 插件运行在 Electron，可以直接监听 localhost，先例：Local REST API 插件）。
-      用户体验 = 装 Chrome 扩展 + 装 Obsidian 插件，零终端零 Python，插件商店分发/自动更新
-- [ ] **纯扩展模式（备选）**：File System Access API 让用户选一次 vault 文件夹，扩展直接写
+**接下来**
+- [ ] **纯扩展模式**：File System Access API 让用户选一次 vault 文件夹，扩展直接写
       Markdown，连 Obsidian 都不用装（适合非 Obsidian 用户）
 - [ ] 扩展侧离线队列：桥接不在线时把事件存 `chrome.storage`，恢复后补发，永不丢事件
 
 **功能向**
-- [ ] 打包发布 Chrome Web Store / Firefox
+- [x] Chrome Web Store —— 已提交审核中 · [ ] Firefox 移植
 - [ ] 捕获题目描述存入笔记（离线可读）
 - [ ] Dataview 索引页模板（错题本 / 间隔重做提醒）
 - [ ] `lc import`：把旧的手写笔记拆分导入

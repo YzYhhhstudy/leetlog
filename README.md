@@ -2,6 +2,12 @@
 
 # 📗 LeetLog
 
+[![Release](https://img.shields.io/github/v/release/YzYhhhstudy/leetlog?label=release&color=2ea44f)](https://github.com/YzYhhhstudy/leetlog/releases)
+[![Obsidian plugin](https://img.shields.io/badge/Obsidian-LeetLog%20Bridge-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/plugins?id=leetlog-bridge)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-in%20review-f4b400?logo=googlechrome&logoColor=white)](https://github.com/YzYhhhstudy/leetlog/releases)
+[![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/YzYhhhstudy)
+
 **Auto-capture your LeetCode grind into your local Obsidian vault — you only write the insights.**
 
 ![demo](docs/demo.svg)
@@ -41,9 +47,21 @@ the submit request already contains your code; the judge endpoint returns Accept
 Result polling is dual-channel: the classic `/check/` endpoint, with GraphQL `submissionDetails`
 as fallback. **Everything flows `leetcode.com page → 127.0.0.1 → local files`. Nothing is uploaded.**
 
-## Install (two steps)
+## Install (~2 minutes)
 
-### 1. Start the local bridge
+LeetLog is two pieces: the **browser extension** (captures your practice) and a **bridge**
+on your machine (writes the notes). Pick **one** bridge — they share port 8763.
+
+### 1. Install a bridge (pick one)
+
+**Option A — Obsidian plugin (recommended, zero terminal)**
+
+In Obsidian: **Settings → Community plugins → Browse** → search **"LeetLog Bridge"** →
+Install → Enable — or open [obsidian.md/plugins?id=leetlog-bridge](https://obsidian.md/plugins?id=leetlog-bridge).
+Port, notes folder and note template language (English / 中文) live in the plugin settings.
+Auto-updates through Obsidian.
+
+**Option B — Python server (works without Obsidian)**
 
 ```bash
 python3 server/leetlog_server.py
@@ -73,7 +91,10 @@ launchctl load ~/Library/LaunchAgents/com.leetlog.server.plist
 ```
 </details>
 
-### 2. Load the browser extension
+### 2. Install the browser extension
+
+**The Chrome Web Store listing is in review** — a one-click install link lands here once
+it's approved. Until then, load it unpacked:
 
 Chrome / Edge / Arc: `chrome://extensions` → enable **Developer mode** → **Load unpacked** →
 select the `extension/` folder.
@@ -144,20 +165,18 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 
 ## Roadmap
 
-**v1.0 (current)**: extension + Python bridge, verified end-to-end on production LeetCode
+**v0.2 (current)**: extension + two interchangeable bridges — the **LeetLog Bridge Obsidian
+plugin** (live in the community marketplace) and the Python server. Verified end-to-end on
+production LeetCode. Chrome Web Store listing in review.
 
-**v2.0 — kill the "start a server" step (two tracks)**
-- [ ] **Obsidian plugin as the bridge (preferred)**: port the bridge to a TypeScript Obsidian
-      community plugin (plugins run in Electron and can listen on localhost — precedent:
-      the Local REST API plugin). UX becomes: install Chrome extension + install Obsidian
-      plugin. No terminal, no Python, auto-updates via the plugin marketplace
-- [ ] **Extension-only mode (alternative)**: File System Access API — pick your vault folder
+**Next**
+- [ ] **Extension-only mode**: File System Access API — pick your vault folder
       once, the extension writes Markdown directly, Obsidian not even required
 - [ ] Offline queue in the extension: buffer events in `chrome.storage` when the bridge is
       down, replay on reconnect — never lose a session
 
 **Features**
-- [ ] Package for Chrome Web Store / Firefox
+- [x] Chrome Web Store — submitted, in review · [ ] Firefox port
 - [ ] Capture the problem statement into the note (offline reading)
 - [ ] Dataview index templates (mistake notebook / spaced-repetition reminders)
 - [ ] `lc import`: split legacy hand-written notes into per-problem files
