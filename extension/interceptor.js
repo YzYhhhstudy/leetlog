@@ -109,8 +109,13 @@
         url: `${location.origin}/problems/${slug}/description/`,
       } : null;
       const html = (location.hostname.endsWith("leetcode.cn") && q && q.translatedContent) || (q && q.content) || "";
-      const md = html ? htmlToMd(html) : ""; // 付费题/未登录拿不到题面，只发 meta
-      if (meta && md) meta.gist = md.replace(/\s+/g, " ").slice(0, 200); // 闪卡正面的精简题面（用户内容）
+      let md = html ? htmlToMd(html) : ""; // 付费题/未登录拿不到题面，只发 meta
+      if (meta && md) {
+        meta.gist = md.replace(/\s+/g, " ").slice(0, 200); // 闪卡正面的精简题面（用户内容）
+        // 题面末尾附讲解视频搜索链接（随 statement 流入所有桥接/笔记；云端会照常剥离题面）
+        const q_ = encodeURIComponent(`leetcode ${meta.id}. ${meta.title}`);
+        md += `\n\n[📺 YouTube 讲解视频](https://www.youtube.com/results?search_query=${q_})`;
+      }
       entry.value = { meta, md };
       log("预取完成：", slug, meta ? `#${meta.id}` : "(无元数据)", md ? `${md.length} chars` : "(无题面)");
       return entry.value;
