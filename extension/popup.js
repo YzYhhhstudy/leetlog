@@ -1,3 +1,11 @@
+chrome.storage.local.get("leetlog_queue").then((o) => {
+  const n = (o.leetlog_queue || []).length;
+  if (n) {
+    document.getElementById("queue").innerHTML =
+      `<span class="bad">⏳ 离线队列 <b>${n}</b> 条</span>，服务恢复后自动补录`;
+  }
+});
+
 fetch("http://127.0.0.1:8763/ping")
   .then((r) => r.json())
   .then((d) => {
