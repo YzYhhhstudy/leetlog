@@ -1,0 +1,91 @@
+# LeetLog Bases dashboard — Obsidian 1.9+（核心功能，无需第三方插件，手机端可用）
+# LeetLog Bases dashboard — Obsidian 1.9+ (core feature, no plugin needed, works on mobile)
+#
+# 用法 Usage：把本文件放进 vault 任意位置打开；或在笔记里嵌入 ![[leetlog.base]]
+# 如果你的笔记不在 "LeetCode/" 文件夹，修改下面 inFolder 的参数
+# If your notes are not under "LeetCode/", change the inFolder argument below.
+# 排序：点击列头即可（Obsidian 会记住每个视图的排序）
+# Sorting: click a column header — Obsidian remembers it per view.
+
+filters:
+  and:
+    - file.inFolder("LeetCode")
+    - file.hasProperty("id")
+
+formulas:
+  accuracy: 'if(total_submissions > 0, ((total_ac * 100) / total_submissions).round(0) + "%", "—")'
+  srs_due: 'last_attempt + if(attempts >= 5, "30 days", if(attempts == 4, "14 days", if(attempts == 3, "7 days", if(attempts == 2, "3 days", "1 day"))))'
+
+properties:
+  note.difficulty:
+    displayName: Difficulty
+  note.attempts:
+    displayName: Attempts
+  note.total_submissions:
+    displayName: Submits
+  note.total_ac:
+    displayName: AC
+  note.total_runs:
+    displayName: Runs
+  note.last_attempt:
+    displayName: Last try
+  formula.accuracy:
+    displayName: Accuracy
+  formula.srs_due:
+    displayName: Review due
+
+views:
+  - type: table
+    name: "🔴 Mistakes 错题本"
+    filters:
+      and:
+        - total_ac == 0
+    order:
+      - file.name
+      - note.difficulty
+      - note.total_submissions
+      - note.total_runs
+      - note.last_attempt
+
+  - type: table
+    name: "🔁 Review due 待复习"
+    filters:
+      and:
+        - total_ac > 0
+        - formula.srs_due <= today()
+    order:
+      - file.name
+      - note.difficulty
+      - note.attempts
+      - note.last_attempt
+      - formula.srs_due
+
+  - type: table
+    name: "🕸 Rusty 30d+ 温故"
+    filters:
+      and:
+        - total_ac > 0
+        - last_attempt <= today() - "30 days"
+    limit: 50
+    order:
+      - file.name
+      - note.difficulty
+      - note.attempts
+      - note.last_attempt
+
+  - type: table
+    name: "📚 All 全部"
+    groupBy:
+      property: note.difficulty
+      direction: ASC
+    order:
+      - file.name
+      - note.tags
+      - note.attempts
+      - note.total_submissions
+      - note.total_ac
+      - formula.accuracy
+      - note.last_attempt
+    summaries:
+      note.total_submissions: Sum
+      note.total_ac: Sum

@@ -150,13 +150,15 @@ folded by default — expand only what you want to reread)*
 The frontmatter is designed for Obsidian Properties / Dataview — one query gives you a
 "mistake notebook", "problems untouched for 30+ days", or per-tag accuracy.
 
-**Ready-made Dataview templates** — copy [`templates/`](templates/) into your vault
-(requires the Dataview plugin):
+**Ready-made dashboards** — copy [`templates/`](templates/) into your vault:
 
-- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) — totals, mistake notebook,
-  rusty problems (30+ days), per-tag accuracy
-- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) — spaced-repetition queue
-  (1/3/7/14/30-day intervals stepped by attempt count)
+- [`leetlog.base`](templates/leetlog.base) — **Obsidian Bases** (core feature, 1.9+, works on
+  mobile, no plugin needed): mistake notebook, spaced-repetition due list, rusty problems,
+  all-problems table grouped by difficulty
+- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) — Dataview version with extras Bases
+  can't do yet (per-tag accuracy aggregation, totals paragraph); requires the Dataview plugin
+- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) — Dataview spaced-repetition
+  queue (1/3/7/14/30-day intervals stepped by attempt count)
 
 ## Timing semantics
 

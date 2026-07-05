@@ -142,12 +142,13 @@ total_runs: 9
 frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题本"、
 "超过 30 天没碰的题"、"按标签的正确率"。
 
-**开箱即用的 Dataview 模板** —— 把 [`templates/`](templates/) 复制进 vault 即可
-（需要 Dataview 插件）：
+**开箱即用的仪表盘** —— 把 [`templates/`](templates/) 复制进 vault 即可：
 
-- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) —— 总览、错题本、
-  30 天未碰的题、按标签正确率
-- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) —— 间隔复习队列
+- [`leetlog.base`](templates/leetlog.base) —— **Obsidian Bases** 版（1.9+ 官方核心功能，
+  无需装插件、手机端可用）：错题本、间隔复习到期清单、30 天温故、按难度分组总表
+- [`leetlog-dashboard.md`](templates/leetlog-dashboard.md) —— Dataview 版，含 Bases 暂时
+  做不了的跨条目聚合（按标签正确率、总览段落）；需要 Dataview 插件
+- [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) —— Dataview 版间隔复习队列
   （按做题次数递进 1/3/7/14/30 天）
 
 ## 计时语义
