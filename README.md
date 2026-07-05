@@ -126,10 +126,11 @@ total_runs: 9
 ## Attempt 1 · 2026-07-03 Fri
 ⏱ start 10:34 → first submit 10:42 · coding 8 min → AC 10:49 · 2 submits / 1 AC · 6 runs · 15 min on problem
 
-### ✅ Accepted · python3 · 10:49 (12 ms · 17.1 MB)
-```python
-class Solution: ...
-```
+> [!success]- ✅ Accepted · python3 · 10:49 (12 ms · 17.1 MB)
+> ```python
+> class Solution: ...
+> ```
+> *(each AC lands in its own folded callout — expand only what you want to reread)*
 
 ### 💭 Thoughts & insights
 ### 📚 What I learned (new functions / data structures / patterns)

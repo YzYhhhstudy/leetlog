@@ -42,7 +42,7 @@ var STRINGS = {
     runs: (r) => `\xB7 \u8FD0\u884C ${r} \u6B21`,
     stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
     stmt: "\u9898\u9762",
-    codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
+    codeHeader: (lang, t, perf) => `\u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
     sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
     link: "\u9898\u76EE\u94FE\u63A5",
     nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 \u5EFA\u7ACB\u7B14\u8BB0`,
@@ -60,7 +60,7 @@ var STRINGS = {
     runs: (r) => `\xB7 ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m) => `\xB7 ${m} min on problem`,
     stmt: "Problem",
-    codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
+    codeHeader: (lang, t, perf) => `\u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
     sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
     link: "Problem link",
     nNew: (id, title) => `\u{1F195} ${id}. ${title} \u2014 note created`,
@@ -170,6 +170,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
       this.json(res, 200, {
         ok: true,
         bridge: "obsidian-plugin",
+        version: this.manifest.version,
         vault: this.app.vault.getName(),
         folder: this.data.settings.folder,
         active,
@@ -277,16 +278,17 @@ ${quoted}
     if (i === -1) return text + block;
     return text.slice(0, i) + block + text.slice(i);
   }
+  // AC 代码以默认折叠的 callout 插入
   insertCodeBlock(text, ev, ts) {
     const lang = (ev.lang ?? "").trim();
     const mdLang = LANG_MD[lang.toLowerCase()] ?? (lang.toLowerCase() || "text");
     const perf = [ev.runtime, ev.memory].filter(Boolean).join(" \xB7 ");
     const header = this.S.codeHeader(lang || "?", hm(ts), perf);
+    const fenced = ["```" + mdLang, ...(ev.code ?? "").trimEnd().split("\n"), "```"];
+    const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
     const block = `
-${header}
-\`\`\`${mdLang}
-${(ev.code ?? "").trimEnd()}
-\`\`\`
+> [!success]- ${header}
+${inner}
 `;
     const idx = text.lastIndexOf("\u23F1");
     const lineEnd = text.indexOf("\n", idx);

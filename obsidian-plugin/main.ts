@@ -95,7 +95,7 @@ const STRINGS = {
     stay: (m: number) => `· 本题停留 ${m} 分钟`,
     stmt: "题面",
     codeHeader: (lang: string, t: string, perf: string) =>
-      `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
+      `✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
     link: "题目链接",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — 建立笔记`,
@@ -115,7 +115,7 @@ const STRINGS = {
     stay: (m: number) => `· ${m} min on problem`,
     stmt: "Problem",
     codeHeader: (lang: string, t: string, perf: string) =>
-      `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
+      `✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
     link: "Problem link",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — note created`,
@@ -214,7 +214,7 @@ export default class LeetLogBridge extends Plugin {
       const folder = af instanceof TFolder ? af : null;
       const notes = folder ? folder.children.filter((f) => f instanceof TFile && /^\d/.test(f.name)).length : 0;
       this.json(res, 200, {
-        ok: true, bridge: "obsidian-plugin",
+        ok: true, bridge: "obsidian-plugin", version: this.manifest.version,
         vault: this.app.vault.getName(), folder: this.data.settings.folder,
         active, notes,
       });
@@ -331,12 +331,15 @@ export default class LeetLogBridge extends Plugin {
     return text.slice(0, i) + block + text.slice(i);
   }
 
+  // AC 代码以默认折叠的 callout 插入
   insertCodeBlock(text: string, ev: LeetLogEvent, ts: number): string {
     const lang = (ev.lang ?? "").trim();
     const mdLang = LANG_MD[lang.toLowerCase()] ?? (lang.toLowerCase() || "text");
     const perf = [ev.runtime, ev.memory].filter(Boolean).join(" · ");
     const header = this.S.codeHeader(lang || "?", hm(ts), perf);
-    const block = `\n${header}\n\`\`\`${mdLang}\n${(ev.code ?? "").trimEnd()}\n\`\`\`\n`;
+    const fenced = ["```" + mdLang, ...(ev.code ?? "").trimEnd().split("\n"), "```"];
+    const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
+    const block = `\n> [!success]- ${header}\n${inner}\n`;
     const idx = text.lastIndexOf("⏱");
     const lineEnd = text.indexOf("\n", idx);
     if (idx === -1 || lineEnd === -1) return text + block;
