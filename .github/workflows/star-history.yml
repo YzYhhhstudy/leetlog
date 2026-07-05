@@ -1,0 +1,23 @@
+name: Refresh star-history chart
+
+on:
+  schedule:
+    - cron: "23 8 * * *" # daily, 08:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch chart and inline avatar
+        run: python3 .github/scripts/refresh_star_history.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/star-history.svg
+          git diff --cached --quiet || (git commit -m "chore: refresh star-history chart [skip ci]" && git push)
