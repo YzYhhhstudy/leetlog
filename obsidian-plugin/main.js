@@ -201,7 +201,8 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
   async handleEvent(ev) {
     const slug = ev.slug;
     const ts = Math.floor(ev.ts ?? Date.now() / 1e3);
-    if (!slug || !["start", "result", "leave", "run", "statement"].includes(ev.type)) throw new Error("bad event");
+    if (!slug) throw new Error("bad event");
+    if (!["start", "result", "leave", "run", "statement"].includes(ev.type)) return;
     if (ev.type === "leave") {
       await this.closeSession(slug, ts, "\u5173\u95ED/\u79BB\u5F00\u9875\u9762");
       await this.saveData(this.data);

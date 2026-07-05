@@ -30,13 +30,15 @@ async function syncBadgeAndAlarm(n) {
   }
 }
 
+// 返回 true=送达；false=桥接在线但拒绝了该事件（如旧版桥接不认识新事件类型，
+// 重试无意义，调用方应丢弃，否则会堵住整个队列）；抛异常=桥接不在线
 async function post(ev) {
   const r = await fetch(SERVER, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(ev),
   });
-  if (!r.ok) throw new Error("bridge HTTP " + r.status);
+  return r.ok;
 }
 
 // 新事件先入队尾，再从队头逐条发送 —— 顺序永远与发生顺序一致
@@ -48,13 +50,15 @@ async function enqueueAndFlush(ev) {
     await saveQueue(q);
   }
   while (q.length) {
+    let delivered = false;
     try {
-      await post(q[0]);
+      delivered = await post(q[0]);
     } catch (_) {
       break; // 桥接不在线，剩余的留队列等 alarm 重试
     }
+    if (!delivered) console.warn("[LeetLog] 桥接拒绝事件，已丢弃（桥接版本过旧？）：", q[0] && q[0].type);
     q.shift();
-    await saveQueue(q); // 每送达一条就落盘，worker 被杀也不会重复补录
+    await saveQueue(q); // 每处理一条就落盘，worker 被杀也不会重复补录
   }
   await syncBadgeAndAlarm(q.length);
   return { queued: q.length };

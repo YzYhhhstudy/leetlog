@@ -249,7 +249,9 @@ export default class LeetLogBridge extends Plugin {
   async handleEvent(ev: LeetLogEvent) {
     const slug = ev.slug;
     const ts = Math.floor(ev.ts ?? Date.now() / 1000);
-    if (!slug || !["start", "result", "leave", "run", "statement"].includes(ev.type)) throw new Error("bad event");
+    if (!slug) throw new Error("bad event");
+    // 未知事件类型静默忽略（向前兼容：新版扩展先于插件更新时不至于 500 堵住扩展的离线队列）
+    if (!["start", "result", "leave", "run", "statement"].includes(ev.type)) return;
 
     if (ev.type === "leave") {
       await this.closeSession(slug, ts, "关闭/离开页面");

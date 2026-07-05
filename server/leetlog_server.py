@@ -377,8 +377,11 @@ def handle_event(ev):
         slug = ev.get("slug")
         etype = ev.get("type")
         ts = int(ev.get("ts") or time.time())
-        if not slug or etype not in ("start", "result", "leave", "run", "statement"):
+        if not slug:
             return {"ok": False, "error": "bad event"}
+        # 未知事件类型静默忽略（向前兼容：新版扩展先于桥接更新时不报错）
+        if etype not in ("start", "result", "leave", "run", "statement"):
+            return {"ok": True, "ignored": etype}
 
         if etype == "leave":
             close_session(state, slug, ts, "关闭/离开页面")
