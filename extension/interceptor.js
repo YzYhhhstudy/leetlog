@@ -95,7 +95,7 @@
         method: "POST", credentials: "same-origin",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          query: "query($s:String!){question(titleSlug:$s){questionFrontendId title difficulty topicTags{name} content translatedContent}}",
+          query: "query($s:String!){question(titleSlug:$s){questionFrontendId title translatedTitle difficulty topicTags{name} content translatedContent}}",
           variables: { s: slug },
         }),
       });
@@ -108,6 +108,8 @@
         tags: (q.topicTags || []).map((t) => t.name),
         url: `${location.origin}/problems/${slug}/description/`,
       } : null;
+      // 中文标题（力扣有翻译时随 meta 上云，跨站同题双语展示用）
+      if (meta && q.translatedTitle && q.translatedTitle !== q.title) meta.title_cn = q.translatedTitle;
       const html = (location.hostname.endsWith("leetcode.cn") && q && q.translatedContent) || (q && q.content) || "";
       const md = html ? htmlToMd(html) : ""; // 付费题/未登录拿不到题面，只发 meta
       // 讲解视频链接改由各写入器在题面 callout 外生成（0.6.2 曾塞进 md，折叠后不可见）
