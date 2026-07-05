@@ -165,7 +165,7 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 **接下来**
 - [ ] **纯扩展模式**：File System Access API 让用户选一次 vault 文件夹，扩展直接写
       Markdown，连 Obsidian 都不用装（适合非 Obsidian 用户）
-- [ ] 扩展侧离线队列：桥接不在线时把事件存 `chrome.storage`，恢复后补发，永不丢事件
+- [x] 扩展侧离线队列：桥接不在线时把事件存 `chrome.storage`，恢复后按原时间戳补发，永不丢事件
 
 **功能向**
 - [x] Chrome Web Store —— 已提交审核中 · [ ] Firefox 移植

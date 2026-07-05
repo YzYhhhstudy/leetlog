@@ -172,8 +172,8 @@ production LeetCode. Chrome Web Store listing in review.
 **Next**
 - [ ] **Extension-only mode**: File System Access API — pick your vault folder
       once, the extension writes Markdown directly, Obsidian not even required
-- [ ] Offline queue in the extension: buffer events in `chrome.storage` when the bridge is
-      down, replay on reconnect — never lose a session
+- [x] Offline queue in the extension: buffer events in `chrome.storage` when the bridge is
+      down, replay on reconnect (original timestamps preserved) — never lose a session
 
 **Features**
 - [x] Chrome Web Store — submitted, in review · [ ] Firefox port
