@@ -18,7 +18,6 @@ const NW_STRINGS = {
     runs: (r) => `· 运行 ${r} 次`,
     stay: (m) => `· 本题停留 ${m} 分钟`,
     codeHeader: (lang, t, perf) => `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
-    codeFold: "代码",
     stmt: "题面",
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
     link: "题目链接",
@@ -34,10 +33,87 @@ const NW_STRINGS = {
     runs: (r) => `· ${r} run${r !== 1 ? "s" : ""}`,
     stay: (m) => `· ${m} min on problem`,
     codeHeader: (lang, t, perf) => `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
-    codeFold: "Code",
     stmt: "Problem",
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
     link: "Problem link",
+  },
+};
+
+// 扩展 UI 字符串（popup / options），跟随 leetlog_settings.lang
+const NW_UI = {
+  zh: {
+    settings: "⚙️ 设置",
+    checking: "检测中…",
+    queue: (n) => `⏳ 离线队列 <b>${n}</b> 条，目标恢复后自动补录`,
+    folderMode: "🟢 直写文件夹模式",
+    notesPlace: "笔记位置",
+    total: "累计记录",
+    notesUnit: (n) => `${n} 篇`,
+    folderUnset: "🔴 尚未选择笔记文件夹",
+    goPick: (link) => `请到 ${link} 选择文件夹`,
+    settingsPage: "设置页",
+    permLost: "🔴 文件夹授权已失效",
+    regrant: "重新授权",
+    bridgeRunning: (b, v) => `🟢 本地服务运行中（${b}${v}）`,
+    bridgeObsidian: "Obsidian 插件",
+    bridgePython: "Python 服务",
+    vault: "Vault",
+    active: "进行中的题",
+    noneActive: "无",
+    bridgeDown: "🔴 本地服务未运行",
+    bridgeDownHint: (opt) => `启动 Obsidian（LeetLog Bridge 插件）或运行：<br><code>python3 leetlog_server.py</code><br>不用 Obsidian？${opt}里可切换为直写文件夹模式`,
+    settingsWord: "设置",
+    // options 页
+    optTitle: "📗 LeetLog 设置",
+    secMode: "笔记写入方式",
+    modeBridge: "本地桥接（默认）",
+    modeBridgeDesc: "事件发给 127.0.0.1:8763 —— LeetLog Bridge Obsidian 插件或 Python 服务。适合 Obsidian 用户，笔记模板语言在桥接侧设置。",
+    modeFolder: "直写文件夹（无需 Obsidian）",
+    modeFolderDesc: "扩展直接把 Markdown 笔记写进你选的文件夹（浏览器 File System Access 授权，数据同样不离开本机）。选 Obsidian vault 里的子文件夹也可以，效果与桥接一致。",
+    pick: "选择文件夹…",
+    secLang: "语言 / Language",
+    langDesc: "扩展界面语言，同时是直写文件夹模式的笔记模板语言（桥接模式的笔记语言请在桥接侧设置）。",
+    statusUnset: "尚未选择文件夹",
+    statusGranted: (name) => `🟢 已授权：${name}`,
+    statusLost: (name) => `🔴 ${name} 的授权已失效（浏览器重启后需要重新授权一次）`,
+    footer: "修改即时生效。切换模式不影响已积压的离线队列——队列会发往新的目标。",
+  },
+  en: {
+    settings: "⚙️ Settings",
+    checking: "Checking…",
+    queue: (n) => `⏳ Offline queue: <b>${n}</b> pending — auto-replayed once the target is back`,
+    folderMode: "🟢 Folder mode",
+    notesPlace: "Notes folder",
+    total: "Total notes",
+    notesUnit: (n) => `${n}`,
+    folderUnset: "🔴 No notes folder selected",
+    goPick: (link) => `Pick a folder in ${link}`,
+    settingsPage: "Settings",
+    permLost: "🔴 Folder permission expired",
+    regrant: "Re-grant",
+    bridgeRunning: (b, v) => `🟢 Local bridge running (${b}${v})`,
+    bridgeObsidian: "Obsidian plugin",
+    bridgePython: "Python server",
+    vault: "Vault",
+    active: "Active problems",
+    noneActive: "none",
+    bridgeDown: "🔴 Local bridge not running",
+    bridgeDownHint: (opt) => `Start Obsidian (LeetLog Bridge plugin) or run:<br><code>python3 leetlog_server.py</code><br>No Obsidian? Switch to folder mode in ${opt}`,
+    settingsWord: "Settings",
+    // options page
+    optTitle: "📗 LeetLog Settings",
+    secMode: "How notes are written",
+    modeBridge: "Local bridge (default)",
+    modeBridgeDesc: "Events go to 127.0.0.1:8763 — the LeetLog Bridge Obsidian plugin or the Python server. Best for Obsidian users; note template language is configured on the bridge side.",
+    modeFolder: "Write to a folder (no Obsidian needed)",
+    modeFolderDesc: "The extension writes Markdown notes straight into a folder you pick (browser File System Access permission; nothing leaves your machine). A subfolder inside your Obsidian vault works too — identical notes.",
+    pick: "Choose folder…",
+    secLang: "Language / 语言",
+    langDesc: "Extension UI language, and the note template language for folder mode (bridge-mode note language is set on the bridge side).",
+    statusUnset: "No folder selected yet",
+    statusGranted: (name) => `🟢 Granted: ${name}`,
+    statusLost: (name) => `🔴 Permission for ${name} expired (needs one re-grant after a browser restart)`,
+    footer: "Changes apply immediately. Switching modes keeps the offline queue — pending events go to the new target.",
   },
 };
 
@@ -180,9 +256,7 @@ function nwInsertCodeBlock(text, ev, ts, S) {
   const mdLang = NW_LANG_MD[lang.toLowerCase()] || (lang.toLowerCase() || "text");
   const perf = [ev.runtime, ev.memory].filter(Boolean).join(" · ");
   const header = S.codeHeader(lang || "?", nwHm(ts), perf);
-  const fenced = ["```" + mdLang, ...(ev.code || "").trimEnd().split("\n"), "```"];
-  const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
-  const block = `\n${header}\n> [!success]- ${S.codeFold}\n${inner}\n`;
+  const block = `\n${header}\n\`\`\`${mdLang}\n${(ev.code || "").trimEnd()}\n\`\`\`\n`;
   const idx = text.lastIndexOf("⏱");
   const lineEnd = text.indexOf("\n", idx);
   if (idx === -1 || lineEnd === -1) return text + block;

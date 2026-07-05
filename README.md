@@ -134,12 +134,12 @@ total_runs: 9
 ⏱ start 10:34 → first submit 10:42 · coding 8 min → AC 10:49 · 2 submits / 1 AC · 6 runs · 15 min on problem
 
 ### ✅ Accepted · python3 · 10:49 (12 ms · 17.1 MB)
-> [!success]- Code
-> ```python
-> class Solution: ...
-> ```
+```python
+class Solution: ...
+```
 
-*(each AC keeps its own heading in the outline; the code itself is folded by default)*
+*(each AC is a plain heading + code block — fold the heading's arrow in Obsidian to
+collapse a solution; fold state is remembered per note)*
 
 ### 💭 Thoughts & insights
 ### 📚 What I learned (new functions / data structures / patterns)

@@ -96,7 +96,6 @@ const STRINGS = {
     stmt: "题面",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
-    codeFold: "代码",
     sections: "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
     link: "题目链接",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — 建立笔记`,
@@ -117,7 +116,6 @@ const STRINGS = {
     stmt: "Problem",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
-    codeFold: "Code",
     sections: "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
     link: "Problem link",
     nNew: (id: number, title: string) => `🆕 ${id}. ${title} — note created`,
@@ -334,15 +332,13 @@ export default class LeetLogBridge extends Plugin {
     return text.slice(0, i) + block + text.slice(i);
   }
 
-  // AC 代码以默认折叠的 callout 插入
+  // AC 代码：三级标题 + 原生代码块
   insertCodeBlock(text: string, ev: LeetLogEvent, ts: number): string {
     const lang = (ev.lang ?? "").trim();
     const mdLang = LANG_MD[lang.toLowerCase()] ?? (lang.toLowerCase() || "text");
     const perf = [ev.runtime, ev.memory].filter(Boolean).join(" · ");
     const header = this.S.codeHeader(lang || "?", hm(ts), perf);
-    const fenced = ["```" + mdLang, ...(ev.code ?? "").trimEnd().split("\n"), "```"];
-    const inner = fenced.map((l) => ("> " + l).trimEnd()).join("\n");
-    const block = `\n${header}\n> [!success]- ${this.S.codeFold}\n${inner}\n`;
+    const block = `\n${header}\n\`\`\`${mdLang}\n${(ev.code ?? "").trimEnd()}\n\`\`\`\n`;
     const idx = text.lastIndexOf("⏱");
     const lineEnd = text.indexOf("\n", idx);
     if (idx === -1 || lineEnd === -1) return text + block;
