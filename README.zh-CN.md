@@ -164,7 +164,7 @@ LeetLog 免费、本地优先，并将一直如此。如果它帮你省了时间
 - ⭐ **给仓库点个 Star** —— 零成本，帮更多刷题人看到它
 - 💖 **[GitHub Sponsors 赞助](https://github.com/sponsors/YzYhhhstudy)** —— 让 Roadmap 跑得更快
 
-[![Star History Chart](https://api.star-history.com/svg?repos=YzYhhhstudy/leetlog&type=Date)](https://star-history.com/#YzYhhhstudy/leetlog&Date)
+[![Star History Chart](docs/star-history.svg)](https://star-history.com/#YzYhhhstudy/leetlog&Date)
 
 ## License
 
