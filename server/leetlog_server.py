@@ -28,7 +28,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 PORT = int(os.environ.get("LEETLOG_PORT", "8763"))
 CONFIG_DIR = Path(os.environ.get("LEETLOG_CONFIG", str(Path.home() / ".config" / "leetlog")))
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -52,6 +52,7 @@ STRINGS = {
         "stay": "· 本题停留 {m} 分钟",
         "stmt": "题面",
         "code_header": "### ✅ 通过代码 · {lang} · {t}",
+        "code_fold": "代码",
         "sections": "### 💭 思路 & 感悟\n-\n\n### 📚 学到了什么（新函数 / 新数据结构 / 新套路）\n-\n\n### 🔀 多种解法\n-\n",
         "link": "题目链接",
         "log_new": "🆕 {id}. {title} — 建立笔记",
@@ -71,6 +72,7 @@ STRINGS = {
         "stay": "· {m} min on problem",
         "stmt": "Problem",
         "code_header": "### ✅ Accepted · {lang} · {t}",
+        "code_fold": "Code",
         "sections": "### 💭 Thoughts & insights\n-\n\n### 📚 What I learned (new functions / data structures / patterns)\n-\n\n### 🔀 Alternative solutions\n-\n",
         "link": "Problem link",
         "log_new": "🆕 {id}. {title} — note created",
@@ -289,13 +291,16 @@ def insert_statement(text, md, S):
 
 
 def insert_code_block(text, sess, ev, S):
-    """AC 代码（三级标题 + 原生代码块）插到当前（最后一段）⏱ 行之后、感悟区之前"""
+    """AC 代码插到当前（最后一段）⏱ 行之后、感悟区之前：
+       三级标题（保留在大纲）+ 默认折叠的 callout 包裹代码块"""
     now = datetime.fromtimestamp(ev.get("ts", time.time()))
     lang = (ev.get("lang") or "").strip()
     md_lang = LANG_MD.get(lang.lower(), lang.lower() or "text")
     perf = " · ".join(x for x in [ev.get("runtime", ""), ev.get("memory", "")] if x)
     header = S["code_header"].format(lang=lang or '?', t=f"{now:%H:%M}") + (f"（{perf}）" if S is STRINGS["zh"] and perf else (f" ({perf})" if perf else ""))
-    block = f"\n{header}\n```{md_lang}\n{(ev.get('code') or '').rstrip()}\n```\n"
+    fenced = [f"```{md_lang}", *(ev.get('code') or '').rstrip().split("\n"), "```"]
+    inner = "\n".join(("> " + l).rstrip() for l in fenced)
+    block = f"\n{header}\n> [!success]- {S['code_fold']}\n{inner}\n"
     idx = text.rfind("⏱")
     line_end = text.find("\n", idx)
     if idx == -1 or line_end == -1:
