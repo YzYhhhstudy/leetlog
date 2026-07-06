@@ -123,6 +123,9 @@ total_runs: 9
 > [!abstract]- 题面
 > 罗马数字包含以下七种字符…… *（题面自动抓取，默认折叠——地铁上离线翻错题本也能看题）*
 
+🎬 [Bilibili：罗马数字转整数 题解](…) · [YouTube: Roman to Integer](…)
+*（题解视频搜索链接就在题面下方——力扣题带 Bilibili，两站都有 YouTube）*
+
 ## 第 1 次 · 2026-07-03 周五
 ⏱ 开始 10:34 → 首提 10:42 · 编码 8 分钟 → AC 10:49 · 提交 2 次 / 通过 1 次 · 运行 6 次 · 本题停留 15 分钟
 
@@ -150,6 +153,19 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
   做不了的跨条目聚合（按标签正确率、总览段落）；需要 Dataview 插件
 - [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) —— Dataview 版间隔复习队列
   （按做题次数递进 1/3/7/14/30 天）
+
+## 可选云同步（内测）
+
+本地优先仍是默认——**不主动开启就没有任何上传**。在扩展的 **⚙️ 设置页**用一次性配对码
+连接 **LeetLog Cloud**（私有内测）后，在本地笔记之外还能得到：
+
+- **自动错题本** —— 按"卡壳信号"（WA 率、调试强度、编码耗时）打分排序，每个分数可解释
+- **间隔复习闪卡**（1/3/7/14/30 天）+ 到期邮件提醒；扩展徽章显示今天到期数
+- **跨站识别**：同一道题在 leetcode.com 和 leetcode.cn 都做过？卡片和列表自动显示双语
+  标题（Two Sum · 两数之和），并给出两个站的链接
+- Anki 导出、个人数据仪表盘
+
+云同步与本地桥接互相独立——可以只用其一，也可以都用或都不用。
 
 ## 计时语义
 
@@ -183,8 +199,9 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 
 ## Roadmap
 
-**v0.2（当前）**：扩展 + 两种可互换的桥接——**LeetLog Bridge Obsidian 插件**（已上线社区市场）
-和 Python 服务；已在真实 LeetCode 环境端到端验证；Chrome Web Store 审核中。
+**v0.3（当前）**：扩展（0.6.x）+ 三种可互换的写入端——**LeetLog Bridge Obsidian 插件**
+（已上线社区市场，当前 0.3.5）、Python 服务、纯扩展直写文件夹模式；可选云同步私有内测中；
+已在 leetcode.com 和 leetcode.cn 端到端验证；Chrome Web Store 审核中。
 
 **接下来**
 - [x] **纯扩展模式**：设置页里选一次文件夹，扩展经 File System Access API 直接写
@@ -196,6 +213,9 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - [x] 捕获题目描述存入笔记（默认折叠 callout，离线可读；leetcode.cn 自动取中文题面）
 - [x] Dataview 索引页模板 —— 见 [`templates/`](templates/)
 - [x] Run（不提交的测试运行）次数统计（`total_runs` + 当次 ⏱ 行）
+- [x] 题面下方的题解视频链接（YouTube；力扣题另有 Bilibili）
+- [x] 可选云同步：自动错题本、SRS 闪卡、扩展徽章到期数（内测）
+- [x] 跨站同题双语标题（.com 和 .cn 都做过时自动启用）
 - [ ] `lc import`：把旧的手写笔记拆分导入
 
 ## ❤️ 支持

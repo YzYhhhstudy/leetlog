@@ -27,6 +27,13 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify manifest version matches tag
+        run: |
+          v=$(node -p "require('./obsidian-plugin/manifest.json').version")
+          if [ "$v" != "${{ github.ref_name }}" ]; then
+            echo "obsidian-plugin/manifest.json ($v) != tag (${{ github.ref_name }})"; exit 1
+          fi
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -43,3 +50,21 @@ jobs:
             obsidian-plugin/main.js \
             --title "LeetLog ${{ github.ref_name }}" \
             --generate-notes
+
+      # Obsidian 商店读默认分支根目录的 manifest.json/versions.json 判断最新版本，
+      # 忘了同步就会"发了 release 但商店看不到新版"（0.3.5 踩过）
+      - name: Sync root manifest/versions to master
+        run: |
+          cp obsidian-plugin/manifest.json /tmp/manifest.json
+          cp obsidian-plugin/versions.json /tmp/versions.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin master
+          git checkout master
+          cp /tmp/manifest.json manifest.json
+          cp /tmp/versions.json versions.json
+          if ! git diff --quiet; then
+            git add manifest.json versions.json
+            git commit -m "chore: sync root manifest to ${{ github.ref_name }} for Obsidian catalog"
+            git push origin master
+          fi

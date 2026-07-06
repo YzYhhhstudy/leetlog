@@ -130,6 +130,9 @@ total_runs: 9
 > Roman numerals are represented by seven different symbols… *(statement auto-captured
 > into a folded callout — read your mistake notebook offline, on the subway)*
 
+🎬 [YouTube: Roman to Integer explained](…) *(video-solution search links land right below
+the statement — Bilibili too for leetcode.cn problems)*
+
 ## Attempt 1 · 2026-07-03 Fri
 ⏱ start 10:34 → first submit 10:42 · coding 8 min → AC 10:49 · 2 submits / 1 AC · 6 runs · 15 min on problem
 
@@ -159,6 +162,22 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
   can't do yet (per-tag accuracy aggregation, totals paragraph); requires the Dataview plugin
 - [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) — Dataview spaced-repetition
   queue (1/3/7/14/30-day intervals stepped by attempt count)
+
+## Optional cloud sync (beta)
+
+Local-first stays the default — nothing is uploaded unless you opt in. In the extension's
+**⚙️ Options** you can pair with **LeetLog Cloud** (private beta) using a one-time pairing
+code. It adds, on top of your local notes:
+
+- **Automatic mistake notebook** — problems ranked by "stuck signals" (WA rate, debug
+  intensity, coding time), each score explainable
+- **Spaced-repetition flashcards** (1/3/7/14/30-day intervals) with email reminders;
+  the extension badge shows today's due count
+- **Cross-site aware**: solved the same problem on both leetcode.com and leetcode.cn?
+  Cards and tables show bilingual titles (Two Sum · 两数之和) with links to both sites
+- Anki export, personal stats dashboard
+
+Cloud sync is independent of the local bridge — either, both, or neither.
 
 ## Timing semantics
 
@@ -194,9 +213,10 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 
 ## Roadmap
 
-**v0.2 (current)**: extension + two interchangeable bridges — the **LeetLog Bridge Obsidian
-plugin** (live in the community marketplace) and the Python server. Verified end-to-end on
-production LeetCode. Chrome Web Store listing in review.
+**v0.3 (current)**: extension (0.6.x) + three interchangeable writers — the **LeetLog Bridge
+Obsidian plugin** (live in the community marketplace, currently 0.3.5), the Python server,
+and extension-only folder mode. Optional cloud sync in private beta. Verified end-to-end on
+production leetcode.com and leetcode.cn. Chrome Web Store listing in review.
 
 **Next**
 - [x] **Extension-only mode**: pick a folder once in the Options page, the extension
@@ -209,6 +229,9 @@ production LeetCode. Chrome Web Store listing in review.
 - [x] Capture the problem statement into the note as a folded callout (offline reading)
 - [x] Dataview index templates — see [`templates/`](templates/)
 - [x] Count Run (non-submit) executions (`total_runs` + per-attempt ⏱ line)
+- [x] Video-solution links under the statement (YouTube; Bilibili for leetcode.cn)
+- [x] Optional cloud sync: auto mistake notebook, SRS flashcards, due-count badge (beta)
+- [x] Cross-site bilingual titles when the same problem is done on .com and .cn
 - [ ] `lc import`: split legacy hand-written notes into per-problem files
 
 ## ❤️ Support
