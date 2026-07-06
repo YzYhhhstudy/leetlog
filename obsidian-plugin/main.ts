@@ -3,7 +3,7 @@
  * 在 Obsidian 内监听 127.0.0.1:<port>，接收 LeetLog 浏览器扩展的事件，
  * 通过 Obsidian Vault API 写刷题笔记。与 Python 版 leetlog_server.py 接口完全一致。
  */
-import { App, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath, requestUrl } from "obsidian";
+import { App, FuzzySuggestModal, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath, requestUrl } from "obsidian";
 
 // Obsidian 桌面端（Electron 渲染进程）通过 require 提供 Node 的 http 模块。
 // 这里用最小化的自持类型声明，避免依赖 @types/node（社区审查的 lint 环境没有它）。
@@ -96,6 +96,7 @@ const STRINGS = {
     stay: (m: number) => `· 本题停留 ${m} 分钟`,
     stmt: "题面",
     videos: "讲解视频",
+    importHeader: "📥 导入的旧笔记",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ 通过代码 · ${lang} · ${t}` + (perf ? `（${perf}）` : ""),
     codeFold: "代码",
@@ -118,6 +119,7 @@ const STRINGS = {
     stay: (m: number) => `· ${m} min on problem`,
     stmt: "Problem",
     videos: "Video solutions",
+    importHeader: "📥 Imported legacy notes",
     codeHeader: (lang: string, t: string, perf: string) =>
       `### ✅ Accepted · ${lang} · ${t}` + (perf ? ` (${perf})` : ""),
     codeFold: "Code",
@@ -155,6 +157,101 @@ function fmSet(text: string, key: string, value: string | number): string {
   return text.replace("---\n", `---\n${key}: ${value}\n`);
 }
 
+// ---------------- 旧笔记导入（server/lc_import.py 的插件版，识别规则与指纹格式完全一致） ----------------
+
+const IMPORT_URL_RE = /leetcode\.(?:com|cn)\/problems\/([a-z0-9-]+)/;
+// "13. Two Sum" / "LC13" / "#13：两数之和" / "题目 13" —— 题号是最可靠的锚点
+const IMPORT_NUM_RE = /(?:^|[\s#（(])(?:LC|LeetCode|力扣|题目?)?\s*#?(\d{1,4})\s*[.、·:：）)\s]/i;
+const IMPORT_HEADING_RE = /^#{1,6}\s+(.+?)\s*$/;
+
+interface IndexMeta { id: number; title: string; difficulty: string }
+type ProblemIndex = Record<string, IndexMeta>; // slug → meta
+
+interface ImportSection { slug: string; heading: string; content: string }
+interface ImportPlanItem extends ImportSection { fp: string; path: string; action: "create" | "append" | "skip" }
+
+async function sha1hex12(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
+}
+
+function importIdentify(heading: string, bodyHead: string, index: ProblemIndex,
+                        byId: Map<number, string>, byTitle: Map<string, string>): string | null {
+  for (const text of [heading, bodyHead]) {
+    const m = text.match(IMPORT_URL_RE);
+    if (m && index[m[1]]) return m[1];
+  }
+  const m = (heading + " ").match(IMPORT_NUM_RE);
+  if (m && byId.has(parseInt(m[1]))) return byId.get(parseInt(m[1]))!;
+  const plain = heading.replace(/[*_`[\]]/g, "").trim().toLowerCase();
+  return byTitle.get(plain) ?? null;
+}
+
+/** 按"能识别为题目的标题"切分；识别不了的疑似题目标题进 unmatched，其余内容归上一题 */
+function splitLegacy(text: string, index: ProblemIndex) {
+  const byId = new Map<number, string>();
+  const byTitle = new Map<string, string>();
+  for (const [slug, m] of Object.entries(index)) {
+    byId.set(m.id, slug);
+    byTitle.set(m.title.toLowerCase(), slug);
+  }
+  const lines = text.split("\n");
+  const sections: ImportSection[] = [];
+  const unmatched: string[] = [];
+  let curSlug: string | null = null, curHead = "", buf: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(IMPORT_HEADING_RE);
+    let slug: string | null = null;
+    if (m) {
+      slug = importIdentify(m[1], lines.slice(i + 1, i + 4).join("\n"), index, byId, byTitle);
+      if (!slug && IMPORT_NUM_RE.test(m[1] + " ")) unmatched.push(m[1]);
+    }
+    if (slug && m) {
+      if (curSlug) sections.push({ slug: curSlug, heading: curHead, content: buf.join("\n").trim() });
+      curSlug = slug; curHead = m[1]; buf = [];
+    } else {
+      buf.push(lines[i]);
+    }
+  }
+  if (curSlug) sections.push({ slug: curSlug, heading: curHead, content: buf.join("\n").trim() });
+  return { sections: sections.filter((s) => s.content), unmatched };
+}
+
+class LegacyPickModal extends FuzzySuggestModal<TFile> {
+  constructor(app: App, private files: TFile[], private onPick: (f: TFile) => void) {
+    super(app);
+    this.setPlaceholder("选择要拆分导入的旧笔记 / Pick the legacy note to split");
+  }
+  getItems(): TFile[] { return this.files; }
+  getItemText(f: TFile): string { return f.path; }
+  onChooseItem(f: TFile): void { this.onPick(f); }
+}
+
+class ImportPreviewModal extends Modal {
+  constructor(app: App, private plan: ImportPlanItem[], private unmatched: string[],
+              private onConfirm: () => void) { super(app); }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: "导入计划 / Import plan" });
+    const icon = { create: "🆕", append: "➕", skip: "⏭️" } as const;
+    const label = { create: "新建", append: "追加", skip: "已导入过，跳过" } as const;
+    for (const it of this.plan) {
+      contentEl.createEl("div", { text: `${icon[it.action]} ${label[it.action]} ${it.path.split("/").pop()} ←「${it.heading}」` });
+    }
+    if (this.unmatched.length) {
+      contentEl.createEl("h4", { text: "⚠️ 未识别（不会导入，请人工处理）" });
+      for (const h of this.unmatched) contentEl.createEl("div", { text: `· ${h}` });
+    }
+    if (!this.plan.length) contentEl.createEl("p", { text: "没有识别到任何题目。标题需含题目链接、题号或英文标题。" });
+    new Setting(contentEl)
+      .addButton((b) => b.setButtonText("导入 / Import").setCta()
+        .setDisabled(!this.plan.some((p) => p.action !== "skip"))
+        .onClick(() => { this.close(); this.onConfirm(); }))
+      .addButton((b) => b.setButtonText("取消 / Cancel").onClick(() => this.close()));
+  }
+  onClose() { this.contentEl.empty(); }
+}
+
 // ---------------- 插件主体 ----------------
 
 export default class LeetLogBridge extends Plugin {
@@ -167,7 +264,96 @@ export default class LeetLogBridge extends Plugin {
     this.data = Object.assign({}, DEFAULTS, saved ?? {});
     this.data.settings = Object.assign({}, DEFAULTS.settings, saved?.settings ?? {});
     this.addSettingTab(new LeetLogSettingTab(this.app, this));
+    this.addCommand({
+      id: "import-legacy-notes",
+      name: "Import legacy notes / 导入旧笔记（拆分为每题一文件）",
+      callback: () => this.pickLegacyNote(),
+    });
     this.startServer();
+  }
+
+  // ---------- 旧笔记导入 ----------
+
+  private indexCache: ProblemIndex | null = null;
+
+  /** 题库索引（slug → id/标题/难度），下载一次后缓存在插件目录 */
+  async problemIndex(): Promise<ProblemIndex> {
+    if (this.indexCache) return this.indexCache;
+    const cachePath = `${this.manifest.dir}/problems-index.json`;
+    const ad = this.app.vault.adapter;
+    try {
+      if (await ad.exists(cachePath)) {
+        this.indexCache = JSON.parse(await ad.read(cachePath)) as ProblemIndex;
+        return this.indexCache;
+      }
+    } catch { /* 缓存损坏则重新下载 */ }
+    new Notice("LeetLog：正在下载题库索引…");
+    interface AllResp { stat_status_pairs?: Array<{ stat: { frontend_question_id: number; question__title: string; question__title_slug: string }; difficulty?: { level: number } }> }
+    const resp = await requestUrl({ url: "https://leetcode.com/api/problems/all/" });
+    const idx: ProblemIndex = {};
+    for (const p of (resp.json as AllResp).stat_status_pairs ?? []) {
+      idx[p.stat.question__title_slug] = {
+        id: p.stat.frontend_question_id,
+        title: p.stat.question__title,
+        difficulty: ["?", "Easy", "Medium", "Hard"][p.difficulty?.level ?? 0] ?? "?",
+      };
+    }
+    await ad.write(cachePath, JSON.stringify(idx));
+    this.indexCache = idx;
+    return idx;
+  }
+
+  pickLegacyNote() {
+    const folder = normalizePath(this.data.settings.folder) + "/";
+    const files = this.app.vault.getMarkdownFiles().filter((f) => !f.path.startsWith(folder));
+    new LegacyPickModal(this.app, files, (f) => { void this.planImport(f); }).open();
+  }
+
+  async planImport(src: TFile) {
+    let index: ProblemIndex;
+    try { index = await this.problemIndex(); }
+    catch (e) { new Notice(`LeetLog：题库索引下载失败（${String(e)}）`, 8000); return; }
+    const { sections, unmatched } = splitLegacy(await this.app.vault.read(src), index);
+    const plan: ImportPlanItem[] = [];
+    for (const s of sections) {
+      const meta = index[s.slug];
+      const path = normalizePath(`${this.data.settings.folder}/${String(meta.id).padStart(4, "0")}-${s.slug}.md`);
+      const fp = await sha1hex12(s.content);
+      const file = this.noteFile(path);
+      const action = file && (await this.app.vault.read(file)).includes(`lc-import: ${fp}`)
+        ? "skip" : file ? "append" : "create";
+      plan.push({ ...s, fp, path, action });
+    }
+    new ImportPreviewModal(this.app, plan, unmatched, () => { void this.applyImport(src, plan, index); }).open();
+  }
+
+  async applyImport(src: TFile, plan: ImportPlanItem[], index: ProblemIndex) {
+    const now = Math.floor(Date.now() / 1000);
+    let created = 0, appended = 0, skipped = 0;
+    for (const it of plan) {
+      if (it.action === "skip") { skipped++; continue; }
+      const block = `\n\n## ${this.S.importHeader} · ${ymd(now)} · ${src.name}\n<!-- lc-import: ${it.fp} -->\n\n${it.content}\n`;
+      const file = this.noteFile(it.path);
+      if (file) {
+        const text = await this.app.vault.read(file);
+        if (text.includes(`lc-import: ${it.fp}`)) { skipped++; continue; } // 计划后又变了：再查一次
+        await this.app.vault.modify(file, text.replace(/\s+$/, "") + block);
+        appended++;
+      } else {
+        const meta = index[it.slug];
+        let prob: ProblemMeta = {
+          id: meta.id, title: meta.title, difficulty: meta.difficulty, tags: [],
+          url: `https://leetcode.com/problems/${it.slug}/description/`,
+        };
+        try {
+          const r = await this.resolveProblem(it.slug); // 联网补标签，失败降级题库索引
+          if (r.id === meta.id) prob = r;
+        } catch { /* 降级 */ }
+        await this.writeNote(it.path, this.newNote(prob, now).replace(/\s+$/, "") + block);
+        created++;
+      }
+    }
+    new Notice(`LeetLog 导入完成：新建 ${created} · 追加 ${appended} · 跳过 ${skipped}`, 8000);
   }
 
   onunload() {
@@ -264,6 +450,25 @@ export default class LeetLogBridge extends Plugin {
       return;
     }
 
+    // statement 只补写已存在的笔记（题面 callout / 视频链接回填）——
+    // 扩展 0.6.6 起页面加载即发，没做过的题绝不因此建笔记、开会话
+    if (ev.type === "statement") {
+      const md = ev.md?.trim();
+      if (!md) return;
+      let path = this.data.state[slug]?.path;
+      if (!path) {
+        const prob = await this.resolveProblem(slug);
+        if (!prob.id) return;
+        path = normalizePath(`${this.data.settings.folder}/${String(prob.id).padStart(4, "0")}-${slug}.md`);
+      }
+      const file = this.noteFile(path);
+      if (!file) return;
+      const text = await this.app.vault.read(file);
+      const updated = this.insertStatement(text, md, ev.site || "com");
+      if (updated !== text) await this.writeNote(path, updated);
+      return;
+    }
+
     if (ev.type === "start") {
       for (const other of Object.keys(this.data.state)) {
         if (other !== slug) await this.closeSession(other, ts, `切换到 ${slug}`);
@@ -272,10 +477,6 @@ export default class LeetLogBridge extends Plugin {
 
     const sess = await this.ensureAttempt(slug, ts);
     let text = await this.readNote(sess.path);
-
-    if (ev.type === "statement" && ev.md?.trim()) {
-      text = this.insertStatement(text, ev.md.trim(), ev.site || "com");
-    }
 
     if (ev.type === "run") {
       sess.runs = (sess.runs ?? 0) + 1;

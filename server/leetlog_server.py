@@ -28,7 +28,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-VERSION = "0.5.3"
+VERSION = "0.5.4"
 PORT = int(os.environ.get("LEETLOG_PORT", "8763"))
 CONFIG_DIR = Path(os.environ.get("LEETLOG_CONFIG", str(Path.home() / ".config" / "leetlog")))
 CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -431,21 +431,38 @@ def handle_event(ev):
             save_state(state)
             return {"ok": True}
 
+        S = get_strings(cfg)
+
+        if etype == "statement":
+            # 只补写已存在的笔记（题面/视频链接回填）——0.6.6 起页面加载即发，
+            # 没做过的题绝不因此建笔记、开会话
+            md = (ev.get("md") or "").strip()
+            if not md:
+                return {"ok": True}
+            path = None
+            if slug in state:
+                path = Path(state[slug]["path"])
+            else:
+                hit = load_problem_cache().get(slug)
+                if hit:
+                    path = Path(cfg["vault"]) / cfg["folder"] / f"{int(hit['id']):04d}-{slug}.md"
+            if path is None or not path.exists():
+                return {"ok": True, "ignored": "no-note"}
+            text = path.read_text()
+            updated = insert_statement(text, md, S, ev.get("site", "com"))
+            if updated != text:
+                path.write_text(updated)
+            return {"ok": True}
+
         if etype == "start":
             # 开始做新题 = 结算其他还开着的题（"直到开始做下一个题"）
             for other in list(state.keys()):
                 if other != slug:
                     close_session(state, other, ts, f"切换到 {slug}")
 
-        S = get_strings(cfg)
         sess = ensure_attempt(cfg, state, slug, ts)
         path = Path(sess["path"])
         text = path.read_text()
-
-        if etype == "statement":
-            md = (ev.get("md") or "").strip()
-            if md:
-                text = insert_statement(text, md, S, ev.get("site", "com"))
 
         if etype == "run":
             sess["runs"] = sess.get("runs", 0) + 1

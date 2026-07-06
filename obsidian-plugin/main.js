@@ -43,6 +43,7 @@ var STRINGS = {
     stay: (m) => `\xB7 \u672C\u9898\u505C\u7559 ${m} \u5206\u949F`,
     stmt: "\u9898\u9762",
     videos: "\u8BB2\u89E3\u89C6\u9891",
+    importHeader: "\u{1F4E5} \u5BFC\u5165\u7684\u65E7\u7B14\u8BB0",
     codeHeader: (lang, t, perf) => `### \u2705 \u901A\u8FC7\u4EE3\u7801 \xB7 ${lang} \xB7 ${t}` + (perf ? `\uFF08${perf}\uFF09` : ""),
     codeFold: "\u4EE3\u7801",
     sections: "### \u{1F4AD} \u601D\u8DEF & \u611F\u609F\n-\n\n### \u{1F4DA} \u5B66\u5230\u4E86\u4EC0\u4E48\uFF08\u65B0\u51FD\u6570 / \u65B0\u6570\u636E\u7ED3\u6784 / \u65B0\u5957\u8DEF\uFF09\n-\n\n### \u{1F500} \u591A\u79CD\u89E3\u6CD5\n-\n",
@@ -63,6 +64,7 @@ var STRINGS = {
     stay: (m) => `\xB7 ${m} min on problem`,
     stmt: "Problem",
     videos: "Video solutions",
+    importHeader: "\u{1F4E5} Imported legacy notes",
     codeHeader: (lang, t, perf) => `### \u2705 Accepted \xB7 ${lang} \xB7 ${t}` + (perf ? ` (${perf})` : ""),
     codeFold: "Code",
     sections: "### \u{1F4AD} Thoughts & insights\n-\n\n### \u{1F4DA} What I learned (new functions / data structures / patterns)\n-\n\n### \u{1F500} Alternative solutions\n-\n",
@@ -115,6 +117,99 @@ function fmSet(text, key, value) {
 ${key}: ${value}
 `);
 }
+var IMPORT_URL_RE = /leetcode\.(?:com|cn)\/problems\/([a-z0-9-]+)/;
+var IMPORT_NUM_RE = /(?:^|[\s#（(])(?:LC|LeetCode|力扣|题目?)?\s*#?(\d{1,4})\s*[.、·:：）)\s]/i;
+var IMPORT_HEADING_RE = /^#{1,6}\s+(.+?)\s*$/;
+async function sha1hex12(s) {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 12);
+}
+function importIdentify(heading, bodyHead, index, byId, byTitle) {
+  for (const text of [heading, bodyHead]) {
+    const m2 = text.match(IMPORT_URL_RE);
+    if (m2 && index[m2[1]]) return m2[1];
+  }
+  const m = (heading + " ").match(IMPORT_NUM_RE);
+  if (m && byId.has(parseInt(m[1]))) return byId.get(parseInt(m[1]));
+  const plain = heading.replace(/[*_`[\]]/g, "").trim().toLowerCase();
+  return byTitle.get(plain) ?? null;
+}
+function splitLegacy(text, index) {
+  const byId = /* @__PURE__ */ new Map();
+  const byTitle = /* @__PURE__ */ new Map();
+  for (const [slug, m] of Object.entries(index)) {
+    byId.set(m.id, slug);
+    byTitle.set(m.title.toLowerCase(), slug);
+  }
+  const lines = text.split("\n");
+  const sections = [];
+  const unmatched = [];
+  let curSlug = null, curHead = "", buf = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(IMPORT_HEADING_RE);
+    let slug = null;
+    if (m) {
+      slug = importIdentify(m[1], lines.slice(i + 1, i + 4).join("\n"), index, byId, byTitle);
+      if (!slug && IMPORT_NUM_RE.test(m[1] + " ")) unmatched.push(m[1]);
+    }
+    if (slug && m) {
+      if (curSlug) sections.push({ slug: curSlug, heading: curHead, content: buf.join("\n").trim() });
+      curSlug = slug;
+      curHead = m[1];
+      buf = [];
+    } else {
+      buf.push(lines[i]);
+    }
+  }
+  if (curSlug) sections.push({ slug: curSlug, heading: curHead, content: buf.join("\n").trim() });
+  return { sections: sections.filter((s) => s.content), unmatched };
+}
+var LegacyPickModal = class extends import_obsidian.FuzzySuggestModal {
+  constructor(app, files, onPick) {
+    super(app);
+    this.files = files;
+    this.onPick = onPick;
+    this.setPlaceholder("\u9009\u62E9\u8981\u62C6\u5206\u5BFC\u5165\u7684\u65E7\u7B14\u8BB0 / Pick the legacy note to split");
+  }
+  getItems() {
+    return this.files;
+  }
+  getItemText(f) {
+    return f.path;
+  }
+  onChooseItem(f) {
+    this.onPick(f);
+  }
+};
+var ImportPreviewModal = class extends import_obsidian.Modal {
+  constructor(app, plan, unmatched, onConfirm) {
+    super(app);
+    this.plan = plan;
+    this.unmatched = unmatched;
+    this.onConfirm = onConfirm;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: "\u5BFC\u5165\u8BA1\u5212 / Import plan" });
+    const icon = { create: "\u{1F195}", append: "\u2795", skip: "\u23ED\uFE0F" };
+    const label = { create: "\u65B0\u5EFA", append: "\u8FFD\u52A0", skip: "\u5DF2\u5BFC\u5165\u8FC7\uFF0C\u8DF3\u8FC7" };
+    for (const it of this.plan) {
+      contentEl.createEl("div", { text: `${icon[it.action]} ${label[it.action]} ${it.path.split("/").pop()} \u2190\u300C${it.heading}\u300D` });
+    }
+    if (this.unmatched.length) {
+      contentEl.createEl("h4", { text: "\u26A0\uFE0F \u672A\u8BC6\u522B\uFF08\u4E0D\u4F1A\u5BFC\u5165\uFF0C\u8BF7\u4EBA\u5DE5\u5904\u7406\uFF09" });
+      for (const h of this.unmatched) contentEl.createEl("div", { text: `\xB7 ${h}` });
+    }
+    if (!this.plan.length) contentEl.createEl("p", { text: "\u6CA1\u6709\u8BC6\u522B\u5230\u4EFB\u4F55\u9898\u76EE\u3002\u6807\u9898\u9700\u542B\u9898\u76EE\u94FE\u63A5\u3001\u9898\u53F7\u6216\u82F1\u6587\u6807\u9898\u3002" });
+    new import_obsidian.Setting(contentEl).addButton((b) => b.setButtonText("\u5BFC\u5165 / Import").setCta().setDisabled(!this.plan.some((p) => p.action !== "skip")).onClick(() => {
+      this.close();
+      this.onConfirm();
+    })).addButton((b) => b.setButtonText("\u53D6\u6D88 / Cancel").onClick(() => this.close()));
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 var LeetLogBridge = class extends import_obsidian.Plugin {
   data = DEFAULTS;
   server = null;
@@ -125,7 +220,113 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     this.data = Object.assign({}, DEFAULTS, saved ?? {});
     this.data.settings = Object.assign({}, DEFAULTS.settings, saved?.settings ?? {});
     this.addSettingTab(new LeetLogSettingTab(this.app, this));
+    this.addCommand({
+      id: "import-legacy-notes",
+      name: "Import legacy notes / \u5BFC\u5165\u65E7\u7B14\u8BB0\uFF08\u62C6\u5206\u4E3A\u6BCF\u9898\u4E00\u6587\u4EF6\uFF09",
+      callback: () => this.pickLegacyNote()
+    });
     this.startServer();
+  }
+  // ---------- 旧笔记导入 ----------
+  indexCache = null;
+  /** 题库索引（slug → id/标题/难度），下载一次后缓存在插件目录 */
+  async problemIndex() {
+    if (this.indexCache) return this.indexCache;
+    const cachePath = `${this.manifest.dir}/problems-index.json`;
+    const ad = this.app.vault.adapter;
+    try {
+      if (await ad.exists(cachePath)) {
+        this.indexCache = JSON.parse(await ad.read(cachePath));
+        return this.indexCache;
+      }
+    } catch {
+    }
+    new import_obsidian.Notice("LeetLog\uFF1A\u6B63\u5728\u4E0B\u8F7D\u9898\u5E93\u7D22\u5F15\u2026");
+    const resp = await (0, import_obsidian.requestUrl)({ url: "https://leetcode.com/api/problems/all/" });
+    const idx = {};
+    for (const p of resp.json.stat_status_pairs ?? []) {
+      idx[p.stat.question__title_slug] = {
+        id: p.stat.frontend_question_id,
+        title: p.stat.question__title,
+        difficulty: ["?", "Easy", "Medium", "Hard"][p.difficulty?.level ?? 0] ?? "?"
+      };
+    }
+    await ad.write(cachePath, JSON.stringify(idx));
+    this.indexCache = idx;
+    return idx;
+  }
+  pickLegacyNote() {
+    const folder = (0, import_obsidian.normalizePath)(this.data.settings.folder) + "/";
+    const files = this.app.vault.getMarkdownFiles().filter((f) => !f.path.startsWith(folder));
+    new LegacyPickModal(this.app, files, (f) => {
+      void this.planImport(f);
+    }).open();
+  }
+  async planImport(src) {
+    let index;
+    try {
+      index = await this.problemIndex();
+    } catch (e) {
+      new import_obsidian.Notice(`LeetLog\uFF1A\u9898\u5E93\u7D22\u5F15\u4E0B\u8F7D\u5931\u8D25\uFF08${String(e)}\uFF09`, 8e3);
+      return;
+    }
+    const { sections, unmatched } = splitLegacy(await this.app.vault.read(src), index);
+    const plan = [];
+    for (const s of sections) {
+      const meta = index[s.slug];
+      const path = (0, import_obsidian.normalizePath)(`${this.data.settings.folder}/${String(meta.id).padStart(4, "0")}-${s.slug}.md`);
+      const fp = await sha1hex12(s.content);
+      const file = this.noteFile(path);
+      const action = file && (await this.app.vault.read(file)).includes(`lc-import: ${fp}`) ? "skip" : file ? "append" : "create";
+      plan.push({ ...s, fp, path, action });
+    }
+    new ImportPreviewModal(this.app, plan, unmatched, () => {
+      void this.applyImport(src, plan, index);
+    }).open();
+  }
+  async applyImport(src, plan, index) {
+    const now = Math.floor(Date.now() / 1e3);
+    let created = 0, appended = 0, skipped = 0;
+    for (const it of plan) {
+      if (it.action === "skip") {
+        skipped++;
+        continue;
+      }
+      const block = `
+
+## ${this.S.importHeader} \xB7 ${ymd(now)} \xB7 ${src.name}
+<!-- lc-import: ${it.fp} -->
+
+${it.content}
+`;
+      const file = this.noteFile(it.path);
+      if (file) {
+        const text = await this.app.vault.read(file);
+        if (text.includes(`lc-import: ${it.fp}`)) {
+          skipped++;
+          continue;
+        }
+        await this.app.vault.modify(file, text.replace(/\s+$/, "") + block);
+        appended++;
+      } else {
+        const meta = index[it.slug];
+        let prob = {
+          id: meta.id,
+          title: meta.title,
+          difficulty: meta.difficulty,
+          tags: [],
+          url: `https://leetcode.com/problems/${it.slug}/description/`
+        };
+        try {
+          const r = await this.resolveProblem(it.slug);
+          if (r.id === meta.id) prob = r;
+        } catch {
+        }
+        await this.writeNote(it.path, this.newNote(prob, now).replace(/\s+$/, "") + block);
+        created++;
+      }
+    }
+    new import_obsidian.Notice(`LeetLog \u5BFC\u5165\u5B8C\u6210\uFF1A\u65B0\u5EFA ${created} \xB7 \u8FFD\u52A0 ${appended} \xB7 \u8DF3\u8FC7 ${skipped}`, 8e3);
   }
   onunload() {
     this.server?.close();
@@ -213,6 +414,22 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
       await this.saveData(this.data);
       return;
     }
+    if (ev.type === "statement") {
+      const md = ev.md?.trim();
+      if (!md) return;
+      let path = this.data.state[slug]?.path;
+      if (!path) {
+        const prob = await this.resolveProblem(slug);
+        if (!prob.id) return;
+        path = (0, import_obsidian.normalizePath)(`${this.data.settings.folder}/${String(prob.id).padStart(4, "0")}-${slug}.md`);
+      }
+      const file = this.noteFile(path);
+      if (!file) return;
+      const text2 = await this.app.vault.read(file);
+      const updated = this.insertStatement(text2, md, ev.site || "com");
+      if (updated !== text2) await this.writeNote(path, updated);
+      return;
+    }
     if (ev.type === "start") {
       for (const other of Object.keys(this.data.state)) {
         if (other !== slug) await this.closeSession(other, ts, `\u5207\u6362\u5230 ${slug}`);
@@ -220,9 +437,6 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     }
     const sess = await this.ensureAttempt(slug, ts);
     let text = await this.readNote(sess.path);
-    if (ev.type === "statement" && ev.md?.trim()) {
-      text = this.insertStatement(text, ev.md.trim(), ev.site || "com");
-    }
     if (ev.type === "run") {
       sess.runs = (sess.runs ?? 0) + 1;
       text = fmSet(text, "total_runs", parseInt(fmGet(text, "total_runs") ?? "0") + 1);

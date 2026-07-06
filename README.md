@@ -168,6 +168,9 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 Years of hand-written notes in one giant markdown file? Split them into LeetLog's
 one-file-per-problem format:
 
+**In Obsidian** (LeetLog Bridge ≥ 0.3.6): command palette → **Import legacy notes** →
+pick the file → review the split plan → Import. Or from the terminal:
+
 ```bash
 python3 server/lc_import.py my-old-notes.md --dry-run   # preview the split plan
 python3 server/lc_import.py my-old-notes.md             # do it (or pass a folder of .md)

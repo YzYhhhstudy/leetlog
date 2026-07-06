@@ -158,6 +158,9 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 
 多年手写笔记都堆在一个大 markdown 里？一条命令拆成 LeetLog 的每题一文件：
 
+**在 Obsidian 里**（LeetLog Bridge ≥ 0.3.6）：命令面板 → **Import legacy notes / 导入旧笔记**
+→ 选文件 → 预览拆分计划 → 导入。或者用终端：
+
 ```bash
 python3 server/lc_import.py 旧笔记.md --dry-run   # 先看拆分计划
 python3 server/lc_import.py 旧笔记.md             # 执行（也可以传一个 .md 目录）

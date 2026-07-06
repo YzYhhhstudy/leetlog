@@ -451,6 +451,22 @@ async function nwHandleEvent(ev, lang) {
     return;
   }
 
+  // statement 只补写已存在的笔记（题面 callout / 视频链接回填）——
+  // 0.6.6 起页面加载即触发，没做过的题绝不因此建笔记、开会话
+  if (ev.type === "statement") {
+    const md = (ev.md || "").trim();
+    if (!md) return;
+    const meta = (await nwGetMetaCache())[slug];
+    const file = (sessions[slug] && sessions[slug].file) ||
+                 (meta && meta.id ? nwNoteFile(meta.id, slug) : null);
+    if (!file) return;
+    const text0 = await nwRead(dir, file);
+    if (text0 === null) return;
+    const updated = nwInsertStatement(text0, md, S, ev.site || "com");
+    if (updated !== text0) await nwWrite(dir, file, updated);
+    return;
+  }
+
   if (ev.type === "start") {
     for (const other of Object.keys(sessions)) {
       if (other !== slug) await nwCloseSession(dir, sessions, other, ts, S);
@@ -460,10 +476,6 @@ async function nwHandleEvent(ev, lang) {
   const sess = await nwEnsureAttempt(dir, sessions, slug, ts, S);
   let text = await nwRead(dir, sess.file);
   if (text === null) { await nwSaveSessions(sessions); return; }
-
-  if (ev.type === "statement" && ev.md && ev.md.trim()) {
-    text = nwInsertStatement(text, ev.md.trim(), S, ev.site || "com");
-  }
 
   if (ev.type === "run") {
     sess.runs = (sess.runs || 0) + 1;

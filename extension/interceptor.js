@@ -267,8 +267,14 @@
   };
 
   // 页面加载即预取当前题（fetch 钩子已装好，走 origFetch）
+  // 预取成功立即发 statement —— 题面/视频链接回填不再依赖首次击键（0.6.6）；
+  // 写入端保证 statement 只补写已存在的笔记，纯浏览不会建笔记
   const initialSlug = slugOf();
-  if (initialSlug) prefetchProblem(initialSlug);
+  if (initialSlug) {
+    prefetchProblem(initialSlug).p.then((v) => {
+      if (v && v.md) emit("statement", { md: v.md }, initialSlug);
+    });
+  }
 
   log("interceptor 已加载（v0.5）");
 })();
