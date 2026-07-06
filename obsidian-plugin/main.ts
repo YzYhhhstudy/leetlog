@@ -332,7 +332,8 @@ export default class LeetLogBridge extends Plugin {
     let created = 0, appended = 0, skipped = 0;
     for (const it of plan) {
       if (it.action === "skip") { skipped++; continue; }
-      const block = `\n\n## ${this.S.importHeader} · ${ymd(now)} · ${src.name}\n<!-- lc-import: ${it.fp} -->\n\n${it.content}\n`;
+      // 指纹用 %% %%（Obsidian 原生注释）：实时预览/阅读模式都不可见；HTML 注释会显示出来
+      const block = `\n\n## ${this.S.importHeader} · ${ymd(now)} · ${src.name}\n%% lc-import: ${it.fp} %%\n\n${it.content}\n`;
       const file = this.noteFile(it.path);
       if (file) {
         const text = await this.app.vault.read(file);

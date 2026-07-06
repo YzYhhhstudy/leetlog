@@ -90,8 +90,9 @@ def split_legacy(text, by_id, by_title, cache):
 
 
 def import_block(content, src_name, header, fp):
+    # 指纹用 %% %%（Obsidian 原生注释）：实时预览/阅读模式都不可见；HTML 注释会显示出来
     today = datetime.now().strftime("%Y-%m-%d")
-    return f"\n\n## {header} · {today} · {src_name}\n<!-- lc-import: {fp} -->\n\n{content}\n"
+    return f"\n\n## {header} · {today} · {src_name}\n%% lc-import: {fp} %%\n\n{content}\n"
 
 
 def run(paths, dry_run=False, site="com"):

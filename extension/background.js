@@ -26,10 +26,10 @@ async function saveQueue(q) {
   await chrome.storage.local.set({ [QUEUE_KEY]: q });
 }
 
-async function syncBadgeAndAlarm(n) {
+async function syncBadgeAndAlarm(n, cloudPending = 0) {
   await chrome.action.setBadgeText({ text: n ? String(n) : "" });
-  if (n) {
-    await chrome.action.setBadgeBackgroundColor({ color: "#e8a13c" });
+  if (n) await chrome.action.setBadgeBackgroundColor({ color: "#e8a13c" });
+  if (n || cloudPending) {
     chrome.alarms.create(ALARM, { periodInMinutes: 0.5 });
   } else {
     chrome.alarms.clear(ALARM);
@@ -139,7 +139,8 @@ async function enqueueAndFlush(ev) {
     await saveQueue(q); // 每处理一条就落盘，worker 被杀也不会重复补录
   }
   const cloudPending = await flushCloud(settings);
-  await syncBadgeAndAlarm(q.length + cloudPending);
+  // 徽章只反映本地笔记管道（核心体验）；云端积压不打扰——只保留 alarm 静默重试补发
+  await syncBadgeAndAlarm(q.length, cloudPending);
   return { queued: q.length, cloudQueued: cloudPending };
 }
 

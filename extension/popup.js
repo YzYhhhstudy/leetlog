@@ -85,10 +85,12 @@
     chrome.storage.local.get(["leetlog_queue", "leetlog_cloud_queue"]).then((o) => {
       const n = (o.leetlog_queue || []).length;
       const cn = (o.leetlog_cloud_queue || []).length;
-      const parts = [];
-      if (n) parts.push(U.queue(n));
-      if (s.cloud && s.cloud.enabled && cn) parts.push(U.cloudPending(cn));
-      if (parts.length) $("queue").innerHTML = `<span class="bad">${parts.join("<br>")}</span>`;
+      const html = [];
+      // 红色只留给影响本地笔记的问题；云端积压是后台事务，灰色说明、自动补发不打扰
+      if (n) html.push(`<span class="bad">${U.queue(n)}</span>`);
+      if (s.cloud && s.cloud.error === "token-revoked") html.push(`<span class="bad">${U.cloudRevoked}</span>`);
+      else if (s.cloud && s.cloud.enabled && cn) html.push(`<span class="dim">${U.cloudPending(cn)}</span>`);
+      if (html.length) $("queue").innerHTML = html.join("<br>");
     });
     if (s.mode === "folder") showFolderMode(U);
     else showBridgeMode(U);

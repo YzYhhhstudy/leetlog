@@ -295,7 +295,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
       const block = `
 
 ## ${this.S.importHeader} \xB7 ${ymd(now)} \xB7 ${src.name}
-<!-- lc-import: ${it.fp} -->
+%% lc-import: ${it.fp} %%
 
 ${it.content}
 `;
