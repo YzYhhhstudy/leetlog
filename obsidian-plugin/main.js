@@ -164,23 +164,6 @@ function splitLegacy(text, index) {
   if (curSlug) sections.push({ slug: curSlug, heading: curHead, content: buf.join("\n").trim() });
   return { sections: sections.filter((s) => s.content), unmatched };
 }
-var LegacyPickModal = class extends import_obsidian.FuzzySuggestModal {
-  constructor(app, files, onPick) {
-    super(app);
-    this.files = files;
-    this.onPick = onPick;
-    this.setPlaceholder("\u9009\u62E9\u8981\u62C6\u5206\u5BFC\u5165\u7684\u65E7\u7B14\u8BB0 / Pick the legacy note to split");
-  }
-  getItems() {
-    return this.files;
-  }
-  getItemText(f) {
-    return f.path;
-  }
-  onChooseItem(f) {
-    this.onPick(f);
-  }
-};
 var ImportPreviewModal = class extends import_obsidian.Modal {
   constructor(app, plan, unmatched, onConfirm) {
     super(app);
@@ -223,7 +206,7 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     this.addCommand({
       id: "import-legacy-notes",
       name: "Import legacy notes / \u5BFC\u5165\u65E7\u7B14\u8BB0\uFF08\u62C6\u5206\u4E3A\u6BCF\u9898\u4E00\u6587\u4EF6\uFF09",
-      callback: () => this.pickLegacyNote()
+      callback: () => this.importActiveFile()
     });
     this.startServer();
   }
@@ -255,12 +238,18 @@ var LeetLogBridge = class extends import_obsidian.Plugin {
     this.indexCache = idx;
     return idx;
   }
-  pickLegacyNote() {
-    const folder = (0, import_obsidian.normalizePath)(this.data.settings.folder) + "/";
-    const files = this.app.vault.getMarkdownFiles().filter((f) => !f.path.startsWith(folder));
-    new LegacyPickModal(this.app, files, (f) => {
-      void this.planImport(f);
-    }).open();
+  /** 只作用于当前打开的笔记——不枚举 vault（商店审查最小权限面） */
+  importActiveFile() {
+    const f = this.app.workspace.getActiveFile();
+    if (!f || f.extension !== "md") {
+      new import_obsidian.Notice("\u5148\u6253\u5F00\u8981\u62C6\u5206\u5BFC\u5165\u7684\u65E7\u7B14\u8BB0\uFF0C\u518D\u8FD0\u884C\u672C\u547D\u4EE4 / Open the legacy note first, then run this command", 6e3);
+      return;
+    }
+    if (f.path.startsWith((0, import_obsidian.normalizePath)(this.data.settings.folder) + "/")) {
+      new import_obsidian.Notice("\u8FD9\u5DF2\u7ECF\u5728 LeetLog \u7B14\u8BB0\u6587\u4EF6\u5939\u91CC\u4E86 / This file is already inside the LeetLog notes folder", 6e3);
+      return;
+    }
+    void this.planImport(f);
   }
   async planImport(src) {
     let index;

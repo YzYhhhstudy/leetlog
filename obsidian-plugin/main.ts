@@ -3,7 +3,7 @@
  * 在 Obsidian 内监听 127.0.0.1:<port>，接收 LeetLog 浏览器扩展的事件，
  * 通过 Obsidian Vault API 写刷题笔记。与 Python 版 leetlog_server.py 接口完全一致。
  */
-import { App, FuzzySuggestModal, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath, requestUrl } from "obsidian";
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath, requestUrl } from "obsidian";
 
 // Obsidian 桌面端（Electron 渲染进程）通过 require 提供 Node 的 http 模块。
 // 这里用最小化的自持类型声明，避免依赖 @types/node（社区审查的 lint 环境没有它）。
@@ -217,16 +217,6 @@ function splitLegacy(text: string, index: ProblemIndex) {
   return { sections: sections.filter((s) => s.content), unmatched };
 }
 
-class LegacyPickModal extends FuzzySuggestModal<TFile> {
-  constructor(app: App, private files: TFile[], private onPick: (f: TFile) => void) {
-    super(app);
-    this.setPlaceholder("选择要拆分导入的旧笔记 / Pick the legacy note to split");
-  }
-  getItems(): TFile[] { return this.files; }
-  getItemText(f: TFile): string { return f.path; }
-  onChooseItem(f: TFile): void { this.onPick(f); }
-}
-
 class ImportPreviewModal extends Modal {
   constructor(app: App, private plan: ImportPlanItem[], private unmatched: string[],
               private onConfirm: () => void) { super(app); }
@@ -267,7 +257,7 @@ export default class LeetLogBridge extends Plugin {
     this.addCommand({
       id: "import-legacy-notes",
       name: "Import legacy notes / 导入旧笔记（拆分为每题一文件）",
-      callback: () => this.pickLegacyNote(),
+      callback: () => this.importActiveFile(),
     });
     this.startServer();
   }
@@ -303,10 +293,18 @@ export default class LeetLogBridge extends Plugin {
     return idx;
   }
 
-  pickLegacyNote() {
-    const folder = normalizePath(this.data.settings.folder) + "/";
-    const files = this.app.vault.getMarkdownFiles().filter((f) => !f.path.startsWith(folder));
-    new LegacyPickModal(this.app, files, (f) => { void this.planImport(f); }).open();
+  /** 只作用于当前打开的笔记——不枚举 vault（商店审查最小权限面） */
+  importActiveFile() {
+    const f = this.app.workspace.getActiveFile();
+    if (!f || f.extension !== "md") {
+      new Notice("先打开要拆分导入的旧笔记，再运行本命令 / Open the legacy note first, then run this command", 6000);
+      return;
+    }
+    if (f.path.startsWith(normalizePath(this.data.settings.folder) + "/")) {
+      new Notice("这已经在 LeetLog 笔记文件夹里了 / This file is already inside the LeetLog notes folder", 6000);
+      return;
+    }
+    void this.planImport(f);
   }
 
   async planImport(src: TFile) {
