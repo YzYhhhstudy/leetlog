@@ -206,10 +206,12 @@ Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install
 
 ## D. 上架后 checklist
 
-- [x] README 顶部徽章（07-04 已上：release / Obsidian / CWS-in-review / license / sponsor）。
-      **过审后**：CWS 徽章换成 `chrome-web-store/v/<扩展ID>` + `chrome-web-store/users/<扩展ID>`；
-      Obsidian 下载量徽章等 community-plugin-stats.json 收录 leetlog-bridge 后再加（shields dynamic json 查 `$["leetlog-bridge"].downloads`）
-- [x] README 安装章节已改商店优先（07-04：Obsidian 插件 = 方案 A 可一键装；Chrome 标注审核中，**过审后**把商店链接放正文、load-unpacked 收进 details 折叠）
+- [x] CWS **已过审上线**（07-06）：扩展 ID `nfdgchmjkdfhcmaglfhngmddhjdogdii`，
+      README 徽章已换 `chrome-web-store/v` + `users`，安装区已改一键安装 + load-unpacked 折叠。
+      **待办：上线的是 0.2.1（旧版，无直写模式/云同步）——尽快在 devconsole 传 0.6.7 zip
+      并把 listing 文案换成 B.3 新版（extension-first）**
+- [ ] Obsidian 下载量徽章等 community-plugin-stats.json 收录 leetlog-bridge 后再加
+      （shields dynamic json 查 `$["leetlog-bridge"].downloads`）
 - [ ] 发布帖：Obsidian 论坛 Share & Showcase 板块、r/ObsidianMD、V2EX/即刻（中文用户）
 - [ ] Firefox 版（manifest 加 `browser_specific_settings.gecko.id`，提交 addons.mozilla.org）
 - [ ] GitHub Action 构建 release 并生成 artifact attestations（actions/attest-build-provenance，回应审查建议）

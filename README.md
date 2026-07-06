@@ -4,7 +4,8 @@
 
 [![Release](https://img.shields.io/github/v/release/YzYhhhstudy/leetlog?label=release&color=2ea44f)](https://github.com/YzYhhhstudy/leetlog/releases)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-LeetLog%20Bridge-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/plugins?id=leetlog-bridge)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-in%20review-f4b400?logo=googlechrome&logoColor=white)](https://github.com/YzYhhhstudy/leetlog/releases)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/nfdgchmjkdfhcmaglfhngmddhjdogdii?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white&color=4285f4)](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii)
+[![Chrome Web Store users](https://img.shields.io/chrome-web-store/users/nfdgchmjkdfhcmaglfhngmddhjdogdii?logo=googlechrome&logoColor=white&color=2ea44f)](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii)
 [![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/YzYhhhstudy)
 
@@ -56,11 +57,16 @@ optional upgrades for deeper integration.
 
 ### 1. Install the browser extension
 
-**The Chrome Web Store listing is in review** — a one-click install link lands here once
-it's approved. Until then, load it unpacked:
+**One click from the [Chrome Web Store](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii)**
+(works in Chrome / Edge / Arc / Brave). Microsoft Edge Add-ons listing is in review.
 
-Chrome / Edge / Arc: `chrome://extensions` → enable **Developer mode** → **Load unpacked** →
-select the `extension/` folder.
+<details>
+<summary>Newest features before the store catches up (load unpacked)</summary>
+
+Store review adds a few days of lag per release. For the freshest build:
+`chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the
+`extension/` folder of this repo.
+</details>
 
 ### 2. Choose where notes are written (pick one)
 
@@ -237,9 +243,9 @@ Cloud sync is independent of the local bridge — either, both, or neither.
 ## Roadmap
 
 **v0.3 (current)**: extension (0.6.x) + three interchangeable writers — the **LeetLog Bridge
-Obsidian plugin** (live in the community marketplace, currently 0.3.5), the Python server,
+Obsidian plugin** (live in the community marketplace), the Python server,
 and extension-only folder mode. Optional cloud sync in private beta. Verified end-to-end on
-production leetcode.com and leetcode.cn. Chrome Web Store listing in review.
+production leetcode.com and leetcode.cn. Live on the Chrome Web Store; Edge Add-ons in review.
 
 **Next**
 - [x] **Extension-only mode**: pick a folder once in the Options page, the extension
@@ -248,7 +254,7 @@ production leetcode.com and leetcode.cn. Chrome Web Store listing in review.
       down, replay on reconnect (original timestamps preserved) — never lose a session
 
 **Features**
-- [x] Chrome Web Store — submitted, in review · [ ] Firefox port
+- [x] Chrome Web Store — [live](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii) · [x] Edge Add-ons — in review · [ ] Firefox port
 - [x] Capture the problem statement into the note as a folded callout (offline reading)
 - [x] Dataview index templates — see [`templates/`](templates/)
 - [x] Count Run (non-submit) executions (`total_runs` + per-attempt ⏱ line)
