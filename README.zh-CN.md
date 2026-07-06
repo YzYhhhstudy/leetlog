@@ -154,6 +154,21 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) —— Dataview 版间隔复习队列
   （按做题次数递进 1/3/7/14/30 天）
 
+## 导入旧笔记
+
+多年手写笔记都堆在一个大 markdown 里？一条命令拆成 LeetLog 的每题一文件：
+
+```bash
+python3 server/lc_import.py 旧笔记.md --dry-run   # 先看拆分计划
+python3 server/lc_import.py 旧笔记.md             # 执行（也可以传一个 .md 目录）
+```
+
+标题里有力扣/LeetCode 题目链接、题号（"13. Roman to Integer"、"LC146 …"、"#13"）
+或恰好是题库英文标题，就被识别为一道题；到下一道题之间的内容全部归它——不存在的笔记
+自动新建（题号/难度/标签补全），已有的 LeetLog 笔记则**追加**"📥 导入的旧笔记"段落，
+已记录的做题数据一字不动。幂等：重复运行自动跳过已导入段落。识别不了的标题列出来
+请你人工确认，绝不瞎猜。`--site cn` 让新建笔记的链接指向力扣。
+
 ## 可选云同步（内测）
 
 本地优先仍是默认——**不主动开启就没有任何上传**。在扩展的 **⚙️ 设置页**用一次性配对码
@@ -216,7 +231,7 @@ frontmatter 面向 Obsidian Properties / Dataview：一句查询就能做"错题
 - [x] 题面下方的题解视频链接（YouTube；力扣题另有 Bilibili）
 - [x] 可选云同步：自动错题本、SRS 闪卡、扩展徽章到期数（内测）
 - [x] 跨站同题双语标题（.com 和 .cn 都做过时自动启用）
-- [ ] `lc import`：把旧的手写笔记拆分导入
+- [x] `lc import`：把旧的手写笔记拆分导入（`server/lc_import.py`）
 
 ## ❤️ 支持
 

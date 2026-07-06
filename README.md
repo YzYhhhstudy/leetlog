@@ -163,6 +163,23 @@ The frontmatter is designed for Obsidian Properties / Dataview — one query giv
 - [`leetlog-review-queue.md`](templates/leetlog-review-queue.md) — Dataview spaced-repetition
   queue (1/3/7/14/30-day intervals stepped by attempt count)
 
+## Import your legacy notes
+
+Years of hand-written notes in one giant markdown file? Split them into LeetLog's
+one-file-per-problem format:
+
+```bash
+python3 server/lc_import.py my-old-notes.md --dry-run   # preview the split plan
+python3 server/lc_import.py my-old-notes.md             # do it (or pass a folder of .md)
+```
+
+A heading is recognized as a problem if it contains a leetcode.com/.cn problem link,
+a problem number ("13. Roman to Integer", "LC146 …", "#13"), or an exact English title.
+Everything until the next recognized heading goes with it — into a new note (metadata
+auto-filled) or **appended** to the existing LeetLog note (your captured attempts are never
+touched). Idempotent: re-running skips already-imported sections. Unrecognized headings are
+listed for manual review, never guessed. `--site cn` makes created notes link to leetcode.cn.
+
 ## Optional cloud sync (beta)
 
 Local-first stays the default — nothing is uploaded unless you opt in. In the extension's
@@ -232,7 +249,7 @@ production leetcode.com and leetcode.cn. Chrome Web Store listing in review.
 - [x] Video-solution links under the statement (YouTube; Bilibili for leetcode.cn)
 - [x] Optional cloud sync: auto mistake notebook, SRS flashcards, due-count badge (beta)
 - [x] Cross-site bilingual titles when the same problem is done on .com and .cn
-- [ ] `lc import`: split legacy hand-written notes into per-problem files
+- [x] `lc import`: split legacy hand-written notes into per-problem files (`server/lc_import.py`)
 
 ## ❤️ Support
 
