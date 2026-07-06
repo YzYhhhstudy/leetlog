@@ -1,6 +1,6 @@
 # LeetLog Privacy Policy / 隐私政策
 
-_Last updated: 2026-07-04_
+_Last updated: 2026-07-06_
 
 ## English
 
@@ -17,6 +17,14 @@ _Last updated: 2026-07-04_
   no account, and no sale or sharing of data. The developers never see your data.
 - **Storage**: all data lives in files on your device, under your control. Uninstalling the
   extension and plugin stops all processing; your notes remain yours.
+- **Optional cloud sync (off by default)**: if — and only if — you explicitly pair the
+  extension with a LeetLog Cloud account using a one-time pairing code, the same practice
+  events (problem metadata, timing, submission counts, accepted code, a short problem
+  excerpt for flashcards) are additionally sent to that cloud service to power your
+  mistake notebook, spaced-repetition reminders and stats. Without pairing, no network
+  request ever leaves your machine. You can disconnect at any time in the extension
+  options; revoking the device token stops all uploads immediately. Cloud data is never
+  sold, shared, or used for anything beyond these features.
 - **Open source**: the complete source code is auditable at
   https://github.com/YzYhhhstudy/leetlog
 
@@ -35,4 +43,9 @@ Contact: open an issue at https://github.com/YzYhhhstudy/leetlog/issues
   更不存在出售或共享数据。开发者永远看不到你的数据。
 - **存储**：所有数据都是你设备上的文件，完全由你掌控。卸载扩展和插件即停止一切处理，
   笔记仍归你所有。
+- **可选云同步（默认关闭）**：仅当你在扩展设置里用一次性配对码显式连接 LeetLog Cloud 账号后，
+  同样的做题事件（题目元数据、用时、提交次数、通过代码、供闪卡使用的题面摘要）才会额外发送到
+  该云服务，用于错题本、间隔复习提醒和统计。不配对就没有任何出机器的网络请求。可随时在
+  扩展设置里断开；吊销设备 token 立即停止一切上传。云端数据不会被出售、共享或用于上述功能之外的
+  任何用途。
 - **开源**：完整源代码可在 https://github.com/YzYhhhstudy/leetlog 审计。

@@ -100,6 +100,10 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
   **"Website content"**（对应：题目标题/难度/标签/链接、用户提交的代码文本、判题结果）
   → 三条 certify 全勾（不出售/不用于无关用途/不用于信贷评估），并声明 **无远程代码**。
 - **Privacy policy URL**：`https://github.com/YzYhhhstudy/leetlog/blob/master/PRIVACY.md`
+- **0.6.x 起（可选云同步）补充**：Single purpose 末尾追加一句
+  `Optionally, and only after the user explicitly pairs with a one-time code, the same events can additionally be synced to the user's own LeetLog Cloud account.`
+  数据使用问卷若问"是否传输到开发者服务器"→ 如实答 **是（仅用户显式启用后）**，
+  用途勾 App functionality；PRIVACY.md 已含对应条款（2026-07-06 更新）。
 
 ### 5. 给审核员的备注（Review notes，可选但强烈建议）
 
@@ -164,6 +168,39 @@ transmitted anywhere.
 
 ### 用户侧安装路径（上架后）
 Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install & Enable。
+
+---
+
+## E. Microsoft Edge Add-ons（Partner Center）
+
+注册免费（已完成）。用和 Chrome **完全相同的 zip**，流程约 15 分钟，审核通常 1~7 天。
+
+### 1. 创建
+[partner.microsoft.com/dashboard/microsoftedge](https://partner.microsoft.com/dashboard/microsoftedge)
+→ **Create new extension** → 上传 `dist/leetlog-extension-<版本>.zip`。
+
+### 2. Availability
+- Visibility: **Public**；Markets: **All markets**（默认全选即可）。
+
+### 3. Properties
+- **Category**: `Developer tools`
+- **Privacy policy URL**: `https://github.com/YzYhhhstudy/leetlog/blob/master/PRIVACY.md`
+- **Website / Support URL**: `https://github.com/YzYhhhstudy/leetlog`
+- Mature content: **No**
+
+### 4. Listings（先 English，可再加 Chinese (Simplified)）
+- **Display name**: `LeetLog — LeetCode practice logger for Obsidian`
+- **Description**: 直接复制上文 B.3 的英文长描述（中文列表复制中文版）
+- **Short description**: 复制 B.3 的 Summary
+- **Store logo（必填，300×300）**: `docs/edge-store-logo-300.png`（已生成）
+- **Search terms**: `leetcode, obsidian, notes, timer, practice log, spaced repetition`
+- Screenshots（可选，1280×800）：有空可截 popup + 生成的笔记各一张，转化率会高不少
+
+### 5. Notes for certification
+复制 B.5 的压缩版审核员备注（同样适用）。
+
+> 提交后状态在 Partner Center 的 Extension overview 页可查；过审后拿到
+> `microsoftedge.microsoft.com/addons/detail/<id>` 链接，回填 README 徽章。
 
 ---
 
