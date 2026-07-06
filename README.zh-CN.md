@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/YzYhhhstudy)
 
-**把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你只负责写感悟。**
+**把你的 LeetCode 刷题过程自动记录成本地 Markdown 笔记（Obsidian 就绪）—— 你只负责写感悟。**
 
 ![demo](docs/demo.svg)
 
@@ -42,35 +42,44 @@ content.js ──POST──▶ 本地桥接服务 127.0.0.1:8763（leetlog_serve
 不抓取页面 DOM（LeetCode 改版就失效），而是拦截网络层：提交请求体里有你的代码，
 判题接口里有 Accepted/运行时间/内存。结果轮询走双通道：经典 `/check/` 接口 +
 GraphQL `submissionDetails` 兜底。**所有数据只在 `leetcode.com 页面 → 127.0.0.1 → 本地文件`
-之间流动，无任何外部上传。**
+之间流动，无任何外部上传。** 直写文件夹模式下扩展跳过桥接、自己写笔记文件。
 
 ## 安装（约 2 分钟）
 
-LeetLog 由两部分组成：**浏览器扩展**（负责捕获）+ 本机的**桥接**（负责写笔记）。
-桥接**二选一**即可——两者共用 8763 端口，别同时开。
+**只装浏览器扩展就够用**——它负责捕获做题过程，还能把 Markdown 笔记直接写进任意文件夹。
+桥接（Obsidian 插件 / Python 服务）是可选升级，用于更深的集成。
 
-### 1. 装一个桥接（二选一）
+### 1. 装浏览器扩展
 
-**方案 A —— Obsidian 插件（推荐，零终端）**
+**Chrome Web Store 正在审核中**——过审后这里会换成一键安装链接。目前先手动加载：
+
+Chrome / Edge / Arc：`chrome://extensions` → 打开右上角"开发者模式" →
+"加载已解压的扩展程序" → 选 `extension/` 文件夹。
+
+### 2. 选笔记写到哪里（三选一）
+
+**方案 A —— 直写文件夹模式（最简单，零额外软件）**
+
+在扩展的 **⚙️ 设置页**切换到**直写文件夹模式**，选一个文件夹——选 Obsidian vault 里的
+`LeetCode/` 子文件夹效果最佳。扩展通过浏览器的 File System Access 授权直接写 Markdown
+笔记，数据不离开本机。
+
+**方案 B —— Obsidian 插件桥接（应用内通知、设置界面、旧笔记导入命令）**
 
 Obsidian 里：**设置 → 第三方插件 → 浏览** → 搜索 **"LeetLog Bridge"** → 安装 → 启用
 （或直接打开 [obsidian.md/plugins?id=leetlog-bridge](https://obsidian.md/plugins?id=leetlog-bridge)）。
 端口、笔记文件夹、笔记模板语言（中文 / English）都在插件设置里，随 Obsidian 自动更新。
 
-**方案 B —— Python 服务（不用 Obsidian 也能跑）**
+**方案 C —— Python 服务（不依赖浏览器文件夹授权，也不用 Obsidian）**
 
 ```bash
 python3 server/leetlog_server.py
 ```
 
-**方案 C —— 什么桥接都不装（纯扩展模式）**
-
-在扩展的 **⚙️ 设置页**切换到**直写文件夹模式**，选一个文件夹（选 Obsidian vault 里的
-`LeetCode/` 子文件夹效果最佳）——扩展通过浏览器的 File System Access 授权直接写 Markdown
-笔记。同样的笔记、同样的隐私（数据不离开本机），零额外软件。
-
 零依赖（Python 标准库）。首次运行自动探测你的 Obsidian vault 并生成配置
 `~/.config/leetlog/config.json`（可改 vault 路径和笔记文件夹）。
+
+桥接共用 8763 端口，最多开一个；直写文件夹模式两者都不需要。
 
 <details>
 <summary>开机自启（macOS launchd，可选）</summary>
@@ -93,14 +102,7 @@ launchctl load ~/Library/LaunchAgents/com.leetlog.server.plist
 ```
 </details>
 
-### 2. 装浏览器扩展
-
-**Chrome Web Store 正在审核中**——过审后这里会换成一键安装链接。目前先手动加载：
-
-Chrome / Edge / Arc：`chrome://extensions` → 打开右上角"开发者模式" →
-"加载已解压的扩展程序" → 选 `extension/` 文件夹。
-
-点扩展图标可以看到 🟢 服务状态、笔记位置、进行中的题。
+点扩展图标可以看到 🟢 状态、笔记位置、进行中的题。
 
 ## 生成的笔记
 

@@ -31,47 +31,47 @@ gh release create 0.2.1 \
 
 ### 3. 商店信息（Store listing）
 
-- **名称**：`LeetLog — LeetCode practice logger for Obsidian`
+- **名称**：`LeetLog — LeetCode practice logger (Markdown & Obsidian)`
 - **摘要（Summary，≤132 字符）**：
-  `Auto-log your LeetCode practice into local Obsidian notes: typing starts the timer, AC saves your code. 100% local, zero upload.`
+  `Auto-log LeetCode practice into local Markdown notes: typing starts the timer, AC saves your code. Obsidian-ready. 100% local.`
 - **类别**：Productivity → Developer Tools
 - **语言**：English（可再加 Chinese (Simplified) 本地化，描述用下方中文版）
 - **描述（英文）**：
 
 ```
-LeetLog automatically captures your LeetCode practice into your local Obsidian vault — you only write the insights.
+LeetLog automatically captures your LeetCode practice into local Markdown notes — you only write the insights.
 
 ⌨️ Type your first keystroke on a problem → timer starts
 📤 Every submission is counted automatically
 ✅ Get Accepted → your code, runtime stats and timing are written into a structured note
 📖 Redo an old problem → the same note accumulates every attempt, so you can see what past-you was thinking
 
+WORKS OUT OF THE BOX
+Pick any folder in the extension's options and notes are written straight into it — no extra software needed. Point it at your Obsidian vault and every note lands there ready for Dataview/Bases dashboards (templates included in the repo).
+
 TIMING THAT MATTERS
 • Coding time = first keystroke → first submit (your real solving time)
 • Time on problem = first keystroke → leaving the page (includes review & optimization)
 
-100% LOCAL
-Your data flows from the LeetCode page to 127.0.0.1 on your own machine — nothing is ever uploaded. No account, no analytics, no third-party servers. Fully open source: https://github.com/YzYhhhstudy/leetlog
-
-REQUIRES
-A local bridge on your machine: either the LeetLog Bridge Obsidian plugin (recommended) or the bundled Python server. Setup takes ~2 minutes — see the GitHub README.
+100% LOCAL BY DEFAULT
+Your notes are plain Markdown files on your machine. No account, no analytics, no third-party servers. Optional extras, both off by default: a localhost bridge (LeetLog Bridge Obsidian plugin, or a Python server) for deeper vault integration, and opt-in cloud sync for spaced-repetition flashcards and a mistake notebook. Fully open source: https://github.com/YzYhhhstudy/leetlog
 ```
 
 - **描述（中文，用于 zh-CN 本地化）**：
 
 ```
-LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你只负责写感悟。
+LeetLog 把你的 LeetCode 刷题过程自动记录成本地 Markdown 笔记 —— 你只负责写感悟。
 
 ⌨️ 在题目页敲下第一个键 → 自动开始计时
 📤 每次提交自动计数
 ✅ AC 的瞬间 → 通过代码、运行数据、用时写进结构化笔记
 📖 重做旧题 → 同一篇笔记累积每次尝试，温故知新
 
+开箱即用：在扩展设置里选一个文件夹，笔记直接写进去，不需要装任何其他软件。选 Obsidian vault 的文件夹，笔记就直接进库，配合仓库自带的 Dataview/Bases 仪表盘模板食用。
+
 计时语义：编码时间 = 首次击键 → 首次提交；本题停留 = 首次击键 → 离开页面。
 
-100% 本地：数据只从 LeetCode 页面流向你电脑上的 127.0.0.1，永不上传。无账号、无埋点、无第三方服务器，完全开源。
-
-需要本机运行一个桥接（推荐 LeetLog Bridge Obsidian 插件，或自带的 Python 服务），配置约 2 分钟，见 GitHub README。
+默认 100% 本地：笔记就是你电脑上的 Markdown 文件。无账号、无埋点、无第三方服务器。两个可选增强（默认都关闭）：本机桥接（LeetLog Bridge Obsidian 插件或 Python 服务）做更深的 vault 集成；可选云同步提供间隔复习闪卡和自动错题本。完全开源。
 ```
 
 - **图标**：`extension/icons/icon-128.png`（已生成 ✓，商店 listing 直接上传这张）
@@ -83,7 +83,7 @@ LeetLog 把你的 LeetCode 刷题过程自动记录进本地 Obsidian —— 你
 ### 4. 隐私（Privacy 标签页，审核重点）
 
 - **Single purpose（单一用途声明）**：
-  `Automatically record the user's own LeetCode practice activity (solve timing, submission counts, accepted code) into the user's local note system via a localhost bridge.`
+  `Automatically record the user's own LeetCode practice activity (solve timing, submission counts, accepted code) into local Markdown notes — written directly to a user-chosen folder, or via a bridge on localhost.`
 - **权限理由（Permission justifications）**：
   - `host_permissions: http://127.0.0.1/*` →
     `Send captured practice events to the user's own local bridge application. No external hosts are contacted.`

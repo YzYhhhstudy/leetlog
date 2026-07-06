@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/YzYhhhstudy)
 
-**Auto-capture your LeetCode grind into your local Obsidian vault — you only write the insights.**
+**Auto-capture your LeetCode grind into local Markdown notes — Obsidian-ready, you only write the insights.**
 
 ![demo](docs/demo.svg)
 
@@ -46,36 +46,47 @@ No DOM scraping (breaks on every UI redesign). LeetLog intercepts the network la
 the submit request already contains your code; the judge endpoint returns Accepted/runtime/memory.
 Result polling is dual-channel: the classic `/check/` endpoint, with GraphQL `submissionDetails`
 as fallback. **Everything flows `leetcode.com page → 127.0.0.1 → local files`. Nothing is uploaded.**
+In folder mode the extension skips the bridge entirely and writes the notes itself.
 
 ## Install (~2 minutes)
 
-LeetLog is two pieces: the **browser extension** (captures your practice) and a **bridge**
-on your machine (writes the notes). Pick **one** bridge — they share port 8763.
+The **browser extension alone is enough** — it captures your practice and can write the
+Markdown notes straight into any folder. Bridges (Obsidian plugin / Python server) are
+optional upgrades for deeper integration.
 
-### 1. Install a bridge (pick one)
+### 1. Install the browser extension
 
-**Option A — Obsidian plugin (recommended, zero terminal)**
+**The Chrome Web Store listing is in review** — a one-click install link lands here once
+it's approved. Until then, load it unpacked:
+
+Chrome / Edge / Arc: `chrome://extensions` → enable **Developer mode** → **Load unpacked** →
+select the `extension/` folder.
+
+### 2. Choose where notes are written (pick one)
+
+**Option A — folder mode (simplest, zero extra software)**
+
+In the extension's **⚙️ Options** page, switch to **folder mode** and pick any folder —
+your Obsidian vault's `LeetCode/` subfolder works great. The extension writes the Markdown
+notes directly via the browser's File System Access permission. Nothing leaves your machine.
+
+**Option B — Obsidian plugin bridge (in-app notices, settings UI, legacy-note import)**
 
 In Obsidian: **Settings → Community plugins → Browse** → search **"LeetLog Bridge"** →
 Install → Enable — or open [obsidian.md/plugins?id=leetlog-bridge](https://obsidian.md/plugins?id=leetlog-bridge).
 Port, notes folder and note template language (English / 中文) live in the plugin settings.
 Auto-updates through Obsidian.
 
-**Option B — Python server (works without Obsidian)**
+**Option C — Python server (works without Chrome folder permissions or Obsidian)**
 
 ```bash
 python3 server/leetlog_server.py
 ```
 
-**Option C — no bridge at all (extension-only)**
-
-In the extension's **⚙️ Options** page, switch to **folder mode** and pick any folder
-(your Obsidian vault's `LeetCode/` subfolder works great) — the extension writes the
-Markdown notes directly via the browser's File System Access permission. Same notes,
-same privacy (nothing leaves your machine), zero extra software.
-
 Zero dependencies (Python stdlib). First run auto-detects your Obsidian vault and writes
 `~/.config/leetlog/config.json` (edit vault path / note folder there).
+
+Bridges share port 8763 — run at most one; folder mode needs neither.
 
 <details>
 <summary>Auto-start on login (macOS launchd, optional)</summary>
@@ -98,15 +109,7 @@ launchctl load ~/Library/LaunchAgents/com.leetlog.server.plist
 ```
 </details>
 
-### 2. Install the browser extension
-
-**The Chrome Web Store listing is in review** — a one-click install link lands here once
-it's approved. Until then, load it unpacked:
-
-Chrome / Edge / Arc: `chrome://extensions` → enable **Developer mode** → **Load unpacked** →
-select the `extension/` folder.
-
-Click the extension icon anytime to see 🟢 bridge status, note location, and active problems.
+Click the extension icon anytime to see 🟢 status, note location, and active problems.
 
 ## The generated note
 
