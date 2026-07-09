@@ -6,16 +6,15 @@
 
 ## A. GitHub Release（Obsidian 上架的前置条件，先做这个）
 
-Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（当前 `0.2.1`，不带 v 前缀），
-且附件包含 `manifest.json` 和 `main.js`。一条命令搞定：
+Obsidian 要求：release 的 **tag 必须和 manifest.json 的 version 完全一致**（不带 v 前缀），
+且附件包含 `manifest.json` 和 `main.js`。**现已全自动**（.github/workflows/release.yml）：
 
 ```bash
-cd ~/Desktop/Testall/Mine/leetlog
-gh release create 0.2.1 \
-  obsidian-plugin/manifest.json \
-  obsidian-plugin/main.js \
-  --title "LeetLog 0.2.1" \
-  --notes "First public release: Chrome extension (MV3) + Python bridge + Obsidian plugin bridge. Auto-timing from first keystroke, submission counting, accepted-code capture into local Obsidian notes. 100% local."
+# 1. 把 obsidian-plugin/manifest.json 的 version 和 versions.json 改到新版本号
+# 2. 打 tag 推送即可——CI 自动构建、校验 manifest==tag、创建 release、
+#    并把根目录 manifest/versions 同步回 master（Obsidian 商店读根目录判断新版）
+git tag 0.3.8 && git push origin 0.3.8
+# 3. 发布后本地记得 git pull --rebase（CI 会往 master 推同步提交）
 ```
 
 ---
@@ -26,7 +25,7 @@ gh release create 0.2.1 \
 [chrome.google.com/webstore/devconsole](https://chrome.google.com/webstore/devconsole) → 一次性 $5 注册费。
 
 ### 2. 上传
-"New item" → 上传 `dist/leetlog-extension-0.2.1.zip`（已打好；以后更新跑
+"New item" → 上传 `dist/leetlog-extension-<版本>.zip`（当前线上 0.6.7；打包命令
 `cd extension && zip -r ../dist/leetlog-extension-<版本>.zip . -x ".*"`）。
 
 ### 3. 商店信息（Store listing）
@@ -151,7 +150,7 @@ transmitted anywhere.
 ### 前置检查（都已满足 ✓）
 - [x] 公开仓库，含开源协议（MIT）
 - [x] `manifest.json` 位于**仓库根目录**（已从 obsidian-plugin/ 复制，两处保持同步）
-- [x] Release tag = manifest version（步骤 A 的 `0.2.0`）
+- [x] Release tag = manifest version（步骤 A 的自动化流水线保证）
 - [x] manifest description 为英文
 - [x] `isDesktopOnly: true`（用了 Node http，移动端不支持）
 
@@ -210,8 +209,7 @@ Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install
       扩展 ID `nfdgchmjkdfhcmaglfhngmddhjdogdii`，README 徽章/一键安装区均已就位。
       若 listing 文案还没换成 B.3 新版（extension-first），编辑 listing 即可（文字改动不触发重审）
 - [ ] Edge Add-ons 审核中（07-06 提交）：过审后加 README 徽章 + 商店链接
-- [ ] Obsidian 下载量徽章等 community-plugin-stats.json 收录 leetlog-bridge 后再加
-      （shields dynamic json 查 `$["leetlog-bridge"].downloads`）
+- [x] Obsidian 下载量徽章已上（07-09：community-plugin-stats.json 已收录，首周 25 次下载）
 - [ ] 发布帖：Obsidian 论坛 Share & Showcase 板块、r/ObsidianMD、V2EX/即刻（中文用户）
 - [ ] Firefox 版（manifest 加 `browser_specific_settings.gecko.id`，提交 addons.mozilla.org）
 - [ ] GitHub Action 构建 release 并生成 artifact attestations（actions/attest-build-provenance，回应审查建议）

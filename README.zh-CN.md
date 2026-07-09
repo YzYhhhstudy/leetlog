@@ -4,6 +4,7 @@
 
 [![Release](https://img.shields.io/github/v/release/YzYhhhstudy/leetlog?label=release&color=2ea44f)](https://github.com/YzYhhhstudy/leetlog/releases)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-LeetLog%20Bridge-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/plugins?id=leetlog-bridge)
+[![Obsidian downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22leetlog-bridge%22%5D.downloads&label=Obsidian%20downloads&logo=obsidian&logoColor=white&color=7c3aed)](https://obsidian.md/plugins?id=leetlog-bridge)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/nfdgchmjkdfhcmaglfhngmddhjdogdii?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white&color=4285f4)](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii)
 [![Chrome Web Store users](https://img.shields.io/chrome-web-store/users/nfdgchmjkdfhcmaglfhngmddhjdogdii?logo=googlechrome&logoColor=white&color=2ea44f)](https://chromewebstore.google.com/detail/nfdgchmjkdfhcmaglfhngmddhjdogdii)
 [![License: MIT](https://img.shields.io/github/license/YzYhhhstudy/leetlog?color=blue)](LICENSE)
