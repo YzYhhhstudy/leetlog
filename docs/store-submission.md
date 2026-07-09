@@ -206,10 +206,10 @@ Obsidian → 设置 → 第三方插件 → 浏览 → 搜 "LeetLog" → Install
 
 ## D. 上架后 checklist
 
-- [x] CWS **已过审上线**（07-06）：扩展 ID `nfdgchmjkdfhcmaglfhngmddhjdogdii`，
-      README 徽章已换 `chrome-web-store/v` + `users`，安装区已改一键安装 + load-unpacked 折叠。
-      **待办：上线的是 0.2.1（旧版，无直写模式/云同步）——尽快在 devconsole 传 0.6.7 zip
-      并把 listing 文案换成 B.3 新版（extension-first）**
+- [x] CWS **已上线且为最新版**（07-06 过审，07-06 当天 0.6.7 也已发布）：
+      扩展 ID `nfdgchmjkdfhcmaglfhngmddhjdogdii`，README 徽章/一键安装区均已就位。
+      若 listing 文案还没换成 B.3 新版（extension-first），编辑 listing 即可（文字改动不触发重审）
+- [ ] Edge Add-ons 审核中（07-06 提交）：过审后加 README 徽章 + 商店链接
 - [ ] Obsidian 下载量徽章等 community-plugin-stats.json 收录 leetlog-bridge 后再加
       （shields dynamic json 查 `$["leetlog-bridge"].downloads`）
 - [ ] 发布帖：Obsidian 论坛 Share & Showcase 板块、r/ObsidianMD、V2EX/即刻（中文用户）
