@@ -74,10 +74,9 @@ LeetLog 把你的 LeetCode 刷题过程自动记录成本地 Markdown 笔记 —
 ```
 
 - **图标**：`extension/icons/icon-128.png`（已生成 ✓，商店 listing 直接上传这张）
-- **截图**：至少 1 张 1280×800。建议三张：
-  1. LeetCode AC 页面 + Obsidian 笔记并排（最有说服力）
-  2. 扩展 popup（🟢 状态面板）
-  3. `docs/demo.svg` 导出成 PNG（浏览器打开 → 截图）
+- **截图**：至少 1 张 1280×800。**已备好三组（中英各一，`docs/store-screenshots/`）**：
+  `store-popup-*.png`（popup 状态+今日复习）、`store-note-*.png`（笔记特写）、
+  `store-dash-*.png`（错题本仪表盘）。第四张建议人工补：LeetCode AC 页 + 笔记并排（最有说服力）
 
 ### 4. 隐私（Privacy 标签页，审核重点）
 
